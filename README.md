@@ -12,10 +12,12 @@ In the code implemented here the Ray Tracer has been divided into different comp
     - Extrinsic Factors
     - Intrinsic Factors
     
-    a. EXTRINSIC FACTORS:
+    a. EXTRINSIC FACTORS: These factors set the camera's position and aiming by defining the
+        camera's UVN Co-ordinate System.
        - eyePt: (Vector4) defines the position of camera in World Space Co-ordinates.
        - uAxis: (Vector4) Camera's x-Axis in World Co-ordinates.
        - vAxis: (Vector4) Camera's y-Axis in World Co-ordinates.
        - nAxis: (Vector4) Camera's z_Axis in World Co-ordinates.
-    b. INTRINSIC FACTORS:
-       - 
+       
+    b. INTRINSIC FACTORS: These factors set the camera's optics.
+        
