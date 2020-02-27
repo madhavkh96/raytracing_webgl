@@ -2,6 +2,7 @@ In the code implemented here the Ray Tracer has been divided into different comp
 
 ## Camera  
   Camera Object contatins the following Components of the Raytracer:
+  
     1. Ray
        - Origin:    (Vector4) defines where the ray originates from
        - Direction: (Vector4) defines the direction of the ray
