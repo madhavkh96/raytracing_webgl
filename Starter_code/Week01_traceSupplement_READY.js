@@ -296,12 +296,12 @@ CCamera.prototype.rayPerspective = function(fovy, aspect, zNear) {
   // UNTESTED!!! MIGHT BE WRONG!!!
   this.iNear = zNear;
   this.iTop = zNear * Math.tan(0.5*fovy*(Math.PI/180.0)); // tan(radians)
-  this.iBot = -iTop;
-  this.iRight = iTop*aspect;
-  this.iLeft = -iRight;
+  this.iBot = -this.iTop;
+  this.iRight = this.iTop*aspect;
+  this.iLeft = -this.iRight;
 }
 
-CCamera.prototype.raylookAt = function(eyePt, aimPt, upVec) {
+CCamera.prototype.raylookAt = function (nuEyePt, nuAimPt, nuUpVec) {
 //==============================================================================
 // Adjust the orientation and position of this ray-tracing camera 
 // in 'world' coordinate system.
@@ -317,11 +317,12 @@ CCamera.prototype.raylookAt = function(eyePt, aimPt, upVec) {
 		//
 */
   // UNTESTED!!! MIGHT BE WRONG!!!
-  vec3.subtract(this.nAxis, eyePt, aimPt);  // aim-eye == MINUS N-axis direction
-  vec3.normalize(this.nAxis, this.nAxis);   // N-axis must have unit length.
-  vec3.cross(this.uAxis, this.upVec, this.nAxis);  // U-axis == upVec cross N-axis
-  vec3.normalize(this.uAxis, this.uAxis);   // make it unit-length.
-  vec3.cross(this.vAxis, this.nAxis, this.uAxis); // V-axis == N-axis cross U-axis
+  this.eyePt = nuEyePt;
+    vec3.subtract(this.nAxis, this.eyePt, nuAimPt);  // aim-eye == MINUS N-axis direction
+    vec3.normalize(this.nAxis, this.nAxis);   // N-axis must have unit length.
+    vec3.cross(this.uAxis, nuUpVec, this.nAxis);  // U-axis == upVec cross N-axis
+    vec3.normalize(this.uAxis, this.uAxis);   // make it unit-length.
+    vec3.cross(this.vAxis, this.nAxis, this.uAxis); // V-axis == N-axis cross U-axis
 }
 
 CCamera.prototype.setEyeRay = function(myeRay, xpos, ypos) {
@@ -649,6 +650,9 @@ CImgBuf.prototype.makeRayTracedImage = function() {
 console.log("colr obj:", colr);
 // END DIAGNOSTIC.
 */
+    myCam.rayPerspective(gui.camFovy, gui.camAspect, gui.camNear);
+    myCam.raylookAt(gui.camEyePt, gui.camAimPt, gui.camUpVec);
+
 	var hit = 0;
 	var idx = 0;  // CImgBuf array index(i,j) == (j*this.xSiz + i)*this.pixSiz
   var i,j;      // pixel x,y coordinate (origin at lower left; integer values)
@@ -680,6 +684,10 @@ if(i==0 && j==0) console.log('eyeRay:', eyeRay);
   this.float2int();		// create integer image from floating-point buffer.
 }
 
+CImgBuf.prototype.setImgBuf = function (nuImg) {
+    this.rayCam.setSize(nuImg.xSiz, nuImg.ySiz);
+    this.imgBuf = nuImg;    // set our ray-tracing image destination.
+}
 
 function CScene() {
 //=============================================================================
@@ -741,17 +749,12 @@ function CScene() {
                                     // (why?  JS uses 52-bit mantissa;
                                     // 2^-52 = 2.22E-16, so 10^-15 gives a
                                     // safety margin of 20:1 for small # calcs)
-	//
-	//
-	//
-	//
-	//
-	//  	YOU WRITE THIS!  
-	//
-	//
-	//
-	//
-	//
+  this.eyeRay = new CRay();	        // the ray from the camera for each pixel
+  this.rayCam = new CCamera();	    // the 3D camera that sets eyeRay values:
+  // this is the DEFAULT camera (256,256).
+  // (change it with setImgBuf() if needed)
+  this.item = [];                   // this JavaScript array holds all the
+                                    // CGeom objects of the  current scene.
 }
 
 function CHit() {
@@ -764,16 +767,48 @@ function CHit() {
 // (CHit, CHitList classes are consistent with the 'HitInfo' and 'Intersection'
 // classes described in FS Hill, pg 746).
 
-	//
-	//
-	//
-	//
-	//  	YOU WRITE THIS!  
-	//
-	//
-	//
-	//
-	//
+    this.hitGeom = null;        // (reference to)the CGeom object we pierced in
+    //  in the CScene.item[] array (null if 'none').
+    // NOTE: CGeom objects describe their own
+    // materials and coloring (e.g. CMatl).
+    // TEMPORARY: replaces traceGrid(),traceDisk() return value
+    this.hitNum = -1; // SKY color
+
+    this.t0 = g_t0_MAX;         // 'hit time' parameter for the ray; defines one
+    // 'hit-point' along ray:   orig + t*dir = hitPt.
+    // (default: t set to hit very-distant-sky)
+    this.hitPt = vec4.create(); // World-space location where the ray pierced
+    // the surface of a CGeom item.
+    this.surfNorm = vec4.create();  // World-space surface-normal vector at the 
+    //  point: perpendicular to surface.
+    this.viewN = vec4.create(); // Unit-length vector from hitPt back towards
+    // the origin of the ray we traced.  (VERY
+    // useful for Phong lighting, etc.)
+    this.isEntering = true;       // true iff ray origin was OUTSIDE the hitGeom.
+    //(example; transparency rays begin INSIDE).
+
+    this.modelHitPt = vec4.create(); // the 'hit point' in model coordinates.
+    // *WHY* have modelHitPt? to evaluate procedural textures & materials.
+    //      Remember, we define each CGeom objects as simply as possible in its
+    // own 'model' coordinate system (e.g. fixed, unit size, axis-aligned, and
+    // centered at origin) and each one uses its own worldRay2Model matrix
+    // to customize them in world space.  We use that matrix to translate,
+    // rotate, scale or otherwise transform the object in world space.
+    // This means we must TRANSFORM rays from the camera's 'world' coord. sys.
+    // to 'model' coord sys. before we trace the ray.  We find the ray's
+    // collision length 't' in model space, but we can use it on the world-
+    // space rays to find world-space hit-point as well.
+    //      However, some materials and shading methods work best in model
+    // coordinates too; for example, if we evaluate procedural textures
+    // (grid-planes, checkerboards, 3D woodgrain textures) in the 'model'
+    // instead of the 'world' coord system, they'll stay 'glued' to the CGeom
+    // object as we move it around in world-space (by changing worldRay2Model
+    // matrix), and the object's surface patterns won't change if we 'squeeze' 
+    // or 'stretch' it by non-uniform scaling.
+    this.colr = vec4.clone(g_myScene.skyColor);   // set default as 'sky'
+                                // The final color we computed for this point,
+                                // (note-- not used for shadow rays).
+                                // (uses RGBA. A==opacity, default A=1=opaque.
 }
 
 function CHitList() {
