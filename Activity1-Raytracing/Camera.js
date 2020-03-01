@@ -1,4 +1,4 @@
-class CRay{
+class Ray{
     constructor() {
         //Always construct with default values as origin and going downwards.
         this.origin = vec4.fromValues(0, 0, 0, 1);
