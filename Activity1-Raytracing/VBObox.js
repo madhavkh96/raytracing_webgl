@@ -1,6 +1,9 @@
 // VBO BOX Structure
+import { vec4 } from "../lib/glmatrix";
+import { mat4 } from "../lib/glmatrix";
 
-class GroundPlane{
+
+class GroundPlane {
     constructor() {
         this.VERT_SRC =	//--------------------- VERTEX SHADER source code 
             'attribute vec4 a_Position;\n' +
@@ -39,7 +42,7 @@ class GroundPlane{
 
         this.FSIZE = this.vboContents.BYTES_PER_ELEMENT;
         this.vboBytes = this.vboContents.length * this.FSIZE;
-        this.vboStride = this.vboBytes / this.vboVerts; 
+        this.vboStride = this.vboBytes / this.vboVerts;
 
         this.vboFcount_a_Position = 4;// # of floats in the VBO needed to store the
         this.vboFcount_a_Color = 4;   // # of floats for this attrib (r,g,b,a values) 
@@ -67,7 +70,7 @@ class GroundPlane{
     appendGroundGrid() {
         this.xyMax = 50.0;
         this.xCount = 101;
-        this.yCount = 101;	
+        this.yCount = 101;
 
         var vertsPerLine = 8;      // # vertices stored in vertSet[] for each line;
 
@@ -192,7 +195,118 @@ class GroundPlane{
         this.vboContents = tmp;           // REPLACE old vboContents with tmp
     }
 
+    init() {
+        this.shaderLoc = createProgram(gl, this.VERT_SRC, this.FRAG_SRC);
+        if (!this.shaderLoc) {
+            console.log(this.constructor.name +
+                '.init() failed to create executable Shaders on the GPU. Bye!');
+            return;
+        }
 
+        gl.program = this.shaderLoc;
+
+        this.vboLoc = gl.createBuffer();
+
+        if (!this.vboLoc) {
+            console.log(this.constructor.name +
+                '.init() failed to create VBO in GPU. Bye!');
+            return;
+        }
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vboLoc);
+
+        gl.bufferData(gl.ARRAY_BUFFER, this.vboContents, gl.STATIC_DRAW);
+
+        this.a_PositionLoc = gl.getAttribLocation(this.shaderLoc, 'a_Position');
+        if (this.a_PositionLoc < 0) {
+            console.log(this.constructor.name +
+                'init() failed to get GPU location of attribute a_Position');
+            return -1;
+        }
+
+        this.a_ColorLoc = gl.getAttribLocation(this.shaderLoc, 'a_Color');
+        if (this.a_ColorLoc < 0) {
+            console.log(this.constructor.name +
+                '.init() failed to get the GPU location of attribute a_Color');
+        }
+
+        this.u_mvpMatLoc = gl.getUniformLocation(this.shaderLoc, 'u_mvpMat');
+        if (!this.u_mvpMatLoc) {
+            console.log(this.constructor.name +
+                '.init() failed to get GPU location for u_mvpMat uniform');
+            return;
+        }  
+    }
+
+    switchToMe() {
+        gl.useProgram(this.shaderLoc);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vboLoc);
+
+        gl.vertexAttribPointer(this.a_PositionLoc, this.vboFcount_a_Position, gl.FLOAT,
+            false, this.vboStride, this.vboOffset_a_Position);
+
+        gl.vertexAttribPointer(this.a_ColorLoc, this.vboFcount_a_Color, gl.FLOAT,
+            false, this.vboStride, this.vboOffset_a_Color);
+
+        gl.enableVertexAttribArray(this.a_PositionLoc);
+        gl.enableVertexAttribArray(this.a_ColorLoc);
+    }
+
+    isReady() {
+        var isOk = true;
+
+        if (gl.getParameter(gl.CURRENT_PROGRAM) != this.shaderLoc) {
+            console.log(this.constructor.name +
+                '.isReady() false: shader program at this.shaderLoc not in use!');
+            isOk = false;
+        }
+        if (gl.getParameter(gl.ARRAY_BUFFER_BINDING) != this.vboLoc) {
+            console.log(this.constructor.name +
+                '.isReady() false: vbo at this.vboLoc not in use!');
+            isOK = false;
+        }
+        return isOk;
+    }
+
+    adjust() {
+        if (this.isReady() == false) {
+            console.log('ERROR! before' + this.constructor.name +
+                '.adjust() call you needed to call this.switchToMe()!!');
+        }  
+
+        var camProj = mat4.create();
+        mat4.perspective(camProj,
+            glMatrix.toRadian(gui.camFovy),
+            gui.camAspect,
+            gui.camNear,
+            gui.camFar);                   
+
+        var camView = mat4.create();
+        mat4.lookAt(camView, gui.camEyePt, gui.camAimPt, gui.camUpVec);
+        mat4.multiply(this.mvpMat, camProj, camView);
+
+        gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+    }
+
+    draw() {
+        if (this.isReady() == false) {
+            console.log('ERROR! before' + this.constructor.name +
+                '.draw() call you needed to call this.switchToMe()!!');
+        }  
+
+        var temp = mat4.create();
+        mat4.copy(temp, this.mvpMat);
+
+        gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+
+        mat4.copy(this.mvpMat, temp);
+        gl.drawArrays(gl.LINES, 0, this.vboVerts);
+    }
+
+    reload() {
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vboContents);
+    }
 }
 
 
