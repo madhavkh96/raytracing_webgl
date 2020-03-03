@@ -1,9 +1,6 @@
-// VBO BOX Structure
-import { vec4 } from "../lib/glmatrix";
-import { mat4 } from "../lib/glmatrix";
+// VBO BOX 
 
-
-class GroundPlane {
+class WebGLView {
     constructor() {
         this.VERT_SRC =	//--------------------- VERTEX SHADER source code 
             'attribute vec4 a_Position;\n' +
@@ -22,7 +19,7 @@ class GroundPlane {
             '	 	 gl_FragColor = v_colr; \n' +
             '}\n';
 
-        new Float32Array([         // Array of vertex attribute values we will
+        this.vboContents = new Float32Array([         // Array of vertex attribute values we will
             //Draw the Axes.
             // Red X axis:
             0.00, 0.00, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0,	// x,y,z,w; r,g,b,a (RED)
@@ -119,7 +116,7 @@ class GroundPlane {
             colrNow = vec4.scaleAndAdd(             // find the color of this line,
                 colrNow, this.xBgnColr, xColrStep, line);
             xNow = -this.xyMax + (line * xgap);       // find the x-value of this line,    
-            for (i = 0; i < vertsPerLine; i++ , v++ , idx += this.floatsPerVertex) { // for every vertex in this line,  find x,y,z,w;  r,g,b,a;
+            for (var i = 0; i < vertsPerLine; i++ , v++ , idx += this.floatsPerVertex) { // for every vertex in this line,  find x,y,z,w;  r,g,b,a;
                 // and store them sequentially in vertSet[] array.
                 // We already know  xNow; find yNow:
                 switch (i) { // find y coord value for each vertex in this line:
@@ -306,6 +303,183 @@ class GroundPlane {
 
     reload() {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vboContents);
+    }
+}
+
+class RayTracedView {
+
+    constructor() {
+        this.VERT_SRC =	//--------------------- VERTEX SHADER source code 
+            'attribute vec4 a_Position;\n' +
+            'attribute vec2 a_TexCoord;\n' +
+            'varying vec2 v_TexCoord;\n' +
+            //
+            'void main() {\n' +
+            '  gl_Position = a_Position;\n' +
+            '  v_TexCoord = a_TexCoord;\n' +
+            '}\n';
+
+        this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
+            'precision mediump float;\n' +							// set default precision
+            //
+            'uniform sampler2D u_Sampler;\n' +
+            'varying vec2 v_TexCoord;\n' +
+            //
+            'void main() {\n' +
+            '  gl_FragColor = texture2D(u_Sampler, v_TexCoord);\n' +
+            '}\n';
+
+        this.vboContents = //--------------------- 
+            new Float32Array([					// Array of vertex attribute values we will
+                // transfer to GPU's vertex buffer object (VBO);
+                // Quad vertex coordinates(x,y in CVV); texture coordinates tx,ty
+                -1.00, 1.00, 0.0, 1.0,			// upper left corner  (borderless)
+                -1.00, -1.00, 0.0, 0.0,			// lower left corner,
+                1.00, 1.00, 1.0, 1.0,			// upper right corner,
+                1.00, -1.00, 1.0, 0.0,			// lower left corner.
+            ]);
+
+        this.vboVerts = 4;	
+
+        this.FSIZE = this.vboContents.BYTES_PER_ELEMENT;
+
+        this.vboBytes = this.vboContents.length * this.FSIZE; 
+        this.vboStride = this.vboBytes / this.vboVerts;
+        this.vboFcount_a_Position = 2; 
+        this.vboFcount_a_TexCoord = 2;
+
+        console.assert((this.vboFcount_a_Position +     // check the size of each and
+            this.vboFcount_a_TexCoord) *   // every attribute in our VBO
+            this.FSIZE == this.vboStride, // for agreeement with'stride'
+            "Uh oh! VBObox1.vboStride disagrees with attribute-size values!");
+
+        this.vboOffset_a_Position = 0;
+        this.vboOffset_a_TexCoord = (this.vboFcount_a_Position) * this.FSIZE; 
+        this.vboLoc;
+        this.shaderLoc;
+        this.a_PositionLoc;
+        this.a_TexCoordLoc;
+        this.u_TextureLoc;
+        this.u_SamplerLoc;
+    }
+
+    init() {
+        this.shaderLoc = createProgram(gl, this.VERT_SRC, this.FRAG_SRC);
+        if (!this.shaderLoc) {
+            console.log(this.constructor.name +
+                '.init() failed to create executable Shaders on the GPU. Bye!');
+            return;
+        }
+
+        gl.program = this.shaderLoc;
+
+        this.vboLoc = gl.createBuffer();
+
+        if (!this.vboLoc) {
+            console.log(this.constructor.name +
+                '.init() failed to create VBO in GPU. Bye!');
+            return;
+        }
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vboLoc);
+
+        gl.bufferData(gl.ARRAY_BUFFER, this.vboContents, gl.STATIC_DRAW);
+
+        this.u_TextureLoc = gl.createTexture();
+
+        if (!this.u_TextureLoc) {
+            console.log(this.constructor.name +
+                '.init() Failed to create the texture object on the GPU');
+            return -1;	// error exit.
+        }
+
+        var u_SamplerLoc = gl.getUniformLocation(this.shaderLoc, 'u_Sampler');
+        if (!u_SamplerLoc) {
+            console.log(this.constructor.name +
+                '.init() Failed to find GPU location for texture u_Sampler');
+            return -1;	// error exit.
+        }
+
+        g_myPic.setTestPattern(0);
+
+        gl.activeTexture(gl.TEXTURE0);
+
+        gl.bindTexture(gl.TEXTURE_2D, this.u_TextureLoc);
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, g_myPic.xSize, g_myPic.ySize, 0, gl.RGB, gl.UNSIGNED_BYTE, g_myPic.iBuf);
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+        gl.uniform1i(this.u_SamplerLoc, 0);
+
+        this.a_PositionLoc = gl.getAttribLocation(this.shaderLoc, 'a_Position');
+        if (this.a_PositionLoc < 0) {
+            console.log(this.constructor.name +
+                '.init() Failed to get GPU location of attribute a_Position');
+            return -1;	// error exit.
+        }
+        this.a_TexCoordLoc = gl.getAttribLocation(this.shaderLoc, 'a_TexCoord');
+        if (this.a_TexCoordLoc < 0) {
+            console.log(this.constructor.name +
+                '.init() failed to get the GPU location of attribute a_TexCoord');
+            return -1;	// error exit.
+        }
+    }
+
+    switchToMe() {
+        gl.useProgram(this.shaderLoc);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vboLoc);
+
+        gl.vertexAttribPointer(this.a_PositionLoc, this.vboFcount_a_Position, gl.FLOAT, false, this.vboStride, this.vboOffset_a_Position);
+
+        gl.vertexAttribPointer(this.a_TexCoordLoc, this.vboFcount_a_TexCoord, gl.FLOAT, false, this.vboStride, this.vboOffset_a_TexCoord);
+
+        gl.enableVertexAttribArray(this.a_PositionLoc);
+        gl.enableVertexAttribArray(this.a_TexCoordLoc);
+    }
+
+    isReady() {
+        var isOK = true;
+
+        if (gl.getParameter(gl.CURRENT_PROGRAM) != this.shaderLoc) {
+            console.log(this.constructor.name +
+                '.isReady() false: shader program at this.shaderLoc not in use!');
+            isOK = false;
+        }
+        if (gl.getParameter(gl.ARRAY_BUFFER_BINDING) != this.vboLoc) {
+            console.log(this.constructor.name +
+                '.isReady() false: vbo at this.vboLoc not in use!');
+            isOK = false;
+        }
+        return isOK;
+    }
+
+    adjust() {
+        if (this.isReady() == false) {
+            console.log('ERROR! before' + this.constructor.name +
+                '.adjust() call you needed to call this.switchToMe()!!');
+        }
+    }
+
+    draw() {
+        if (this.isReady() == false) {
+            console.log('ERROR! before' + this.constructor.name +
+                '.draw() call you needed to call this.switchToMe()!!');
+        }
+
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.vboVerts);
+    }
+
+    reload() {
+        if (this.isReady() == false) {
+            console.log('ERROR! before' + this.constructor.name +
+                '.reload() call you needed to call this.switchToMe()!!');
+        }
+
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.vboContents);
+
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, g_myPic.xSize, g_myPic.ySize, gl.RGB, gl.UNSIGNED_BYTE, g_myPic.iBuf);
     }
 }
 

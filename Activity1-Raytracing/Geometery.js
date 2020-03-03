@@ -1,6 +1,3 @@
-import { vec4 } from "../lib/glmatrix";
-import { mat4 } from "../lib/glmatrix";
-
 // Available Geometery for the current Raytracer
 const RT_GNDPLANE = 0;
 const RT_DISK = 1;
@@ -16,33 +13,44 @@ class Geometery{
         if (selectedShape == undefined) selectedShape = RT_GNDPLANE;
         this.shapeType = selectedShape;
 
-        switch (shapeSelected) {
-            case RT_GNDPLANE:
-                this.traceMe = function (inR, hit) { this.traceShape(inR, hit, selectedShape); };
-                break;
-            case RT_DISK:
-                this.traceMe = function (inR, hit) { this.traceShape(inR, hit, selectedShape); };
-                break;
-            case RT_SPHERE:
-                // Stub for when we have made the trace functions
-                break;
-            case RT_BOX:
-                // Stub for when we have made the trace functions
-                break;
-            case RT_CYLINDER:
-                // Stub for when we have made the trace functions
-                break;
-            case RT_TRIANGLE:
-                // Stub for when we have made the trace functions
-                break;
-            case RT_BLOBBY:
-                // Stub for when we have made the trace functions
-                break;
-            default:
-                console.log("Geometery class : INVALID SHAPE INPUT");
-                return;
-                break;
-        }
+        this.traceMe = function (inR, hit) { this.traceShape(inR, hit) }
+
+        //switch (selectedShape) {
+        //    case RT_GNDPLANE:
+        //        this.traceMe = function (inR, hit) { this.traceShape(inR, hit); };
+        //        break;
+        //    case RT_DISK:
+        //        this.traceMe = function (inR, hit) { this.traceShape(inR, hit); };
+        //        break;
+        //    case RT_SPHERE:
+        //        // Stub for when we have made the trace functions
+        //        break;
+        //    case RT_BOX:
+        //        // Stub for when we have made the trace functions
+        //        break;
+        //    case RT_CYLINDER:
+        //        // Stub for when we have made the trace functions
+        //        break;
+        //    case RT_TRIANGLE:
+        //        // Stub for when we have made the trace functions
+        //        break;
+        //    case RT_BLOBBY:
+        //        // Stub for when we have made the trace functions
+        //        break;
+        //    default:
+        //        console.log("Geometery class : INVALID SHAPE INPUT");
+        //        return;
+        //        break;
+        //}
+
+        this.worldRay2model = mat4.create();
+        this.xgap = 1.0;	// line-to-line spacing
+        this.ygap = 1.0;
+        this.lineWidth = 0.1;	// fraction of xgap used for grid-line width
+        this.lineColor = vec4.fromValues(0.1, 0.1, 0.1, 1.0);  // RGBA green(A==opacity)
+        this.gapColor = vec4.fromValues(0.9, 0.9, 0.9, 1.0);  // near-white
+        this.skyColor = vec4.fromValues(0.3, 1.0, 1.0, 1.0);  // cyan/bright blue
+        this.normal2World = mat4.create();
     }
 
     setIdentity() {
@@ -109,7 +117,7 @@ class Geometery{
         mat4.transpose(this.normal2World, this.worldRay2model);
     }
 
-    traceShape(inRay, hit, shape) {
+    traceShape(inRay, hit) {
 
         //Default values for gap and line width
         this.d_xgap = 1.0;	// line-to-line spacing
@@ -121,7 +129,7 @@ class Geometery{
         vec4.copy(rayT.dir, inRay.dir);
 
         //Transform Ray Co-ord System from World to Model Co-ordinate System.
-        vec4.transformMat4(rayT.orig, inRay.orig, this.worldRay2model);
+        vec4.transformMat4(rayT.origin, inRay.origin, this.worldRay2model);
         vec4.transformMat4(rayT.dir, inRay.dir, this.worldRay2model);
 
         //Find the t0 value == where ray hits the shape at z=0;
@@ -146,10 +154,10 @@ class Geometery{
 
         vec4.set(hit.surfNorm, 0, 0, 1, 0);
 
-        switch (shape) {
+        switch (this.shapeType) {
             case RT_GNDPLANE:
                 this.xgap = this.d_xgap;
-                this.ygap = this.xygap;
+                this.ygap = this.d_ygap;
                 // 'Line-grid' defaults:------------------------------------------------------
                 this.lineWidth = this.d_linewidth;	// fraction of xgap used for grid-line width
                 this.lineColor = vec4.fromValues(0.1, 0.1, 0.1, 1.0);  // RGBA green(A==opacity)
@@ -172,7 +180,7 @@ class Geometery{
 
         //For x-gap
         var loc = hit.modelHitPt[0] / this.xgap;
-        if (myHit.modelHitPt[0] < 0) loc = -loc;
+        if (hit.modelHitPt[0] < 0) loc = -loc;
         if (loc % 1 < this.lineWidth) {
             hit.hitNum = 1;                     // Hits
             return;
@@ -183,6 +191,7 @@ class Geometery{
         if (hit.modelHitPt[1] < 0) loc = -loc;
         if (loc % 1 < this.lineWidth) {
             hit.hitNum = 1;                     // Hits
+            return;
         }
 
         hit.hitNum = 0;                         // Doesn't Hit

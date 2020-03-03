@@ -46,6 +46,7 @@ class Camera {
 
         this.ufrac = (this.iRight - this.iLeft) / this.xmax;	// pixel tile's width
         this.vfrac = (this.iTop - this.iBot) / this.ymax;	// pixel tile's height.
+        }
     }
 
     rayFrustrum(left, right, bot, top, near) {
@@ -57,11 +58,11 @@ class Camera {
     }
 
     rayPerspective(fovy, aspect, zNear) {
-        this.iNear = zNear;
-        this.iTop = zNear * Math.tan(0.5 * fovy * (Math.PI / 180.0));
-        this.iBot = -this.iTop;
+        this.iNear  = zNear;
+        this.iTop   = zNear * Math.tan(0.5 * fovy * (Math.PI / 180.0));
+        this.iBot   = -this.iTop;
         this.iRight = this.iTop * aspect;
-        this.iLeft = -this.iRight;
+        this.iLeft  = -this.iRight;
     }
 
     rayLookAt(nuEyePt, nuAimPt, nuUpVec) {
@@ -73,16 +74,16 @@ class Camera {
         vec3.cross(this.vAxis, this.nAxis, this.uAxis); // V-axis == N-axis cross U-axis
     }
 
-    setEyeRay(myeRay, xpos, ypos) {
+    setEyeRay(myRay, xpos, ypos) {
         var posU = this.iLeft + xpos * this.ufrac; 	// U coord,
         var posV = this.iBot + ypos * this.vfrac;	// V coord,
 
-        xyzPos = vec4.create();    // make vector 0,0,0,0.	
+        var xyzPos = vec4.create();    // make vector 0,0,0,0.	
         vec4.scaleAndAdd(xyzPos, xyzPos, this.uAxis, posU); // xyzPos += Uaxis*posU;
         vec4.scaleAndAdd(xyzPos, xyzPos, this.vAxis, posV); // xyzPos += Vaxis*posU;
         vec4.scaleAndAdd(xyzPos, xyzPos, this.nAxis, -this.iNear); 
-        vec4.copy(myeRay.orig, this.eyePt);
-        vec4.copy(myeRay.dir, xyzPos);
+        vec4.copy(myRay.origin, this.eyePt);
+        vec4.copy(myRay.dir, xyzPos);
     }
 
 }

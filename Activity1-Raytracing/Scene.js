@@ -1,5 +1,3 @@
-import { vec4 } from "../lib/glmatrix";
-
 var g_t0_MAX = 1.23E16; // The farthest possible hit point distance
 
 class Hit {
@@ -36,6 +34,9 @@ class Hit {
         vec4.copy(this.modelHitPt, this.hitPt);
     }
 
+
+    //Why? we need this. we already have items[] in the Scene Class.
+
     hitList() {
         //=============================================================================
         // Holds ALL ray/object intersection results from tracing a single ray(CRay)
@@ -68,7 +69,7 @@ class Scene {
         this.imgBuf = nuImg;
     }
 
-    initScene() {
+    initScene(num) {
         if (num == undefined) num = 0;
 
         this.rayCamera.rayPerspective(gui.camFovy, gui.camAspect, gui.camNear);
@@ -97,7 +98,6 @@ class Scene {
         this.setImgBuf(this.imgBuf);
 
         var colr = vec4.create();
-        var hit = 0;
         var idx = 0;
         var i, j;
         var k;
@@ -120,7 +120,7 @@ class Scene {
                 myHit.init();
 
                 for (k = 0; k < this.item.length; k++) {
-                    this.item[k].traceShape(this.eyeRay, myHit, this.item[k]);
+                    this.item[k].traceShape(this.eyeRay, myHit);
                 }
 
                 if (this.pixFlag == 1) {
@@ -138,7 +138,7 @@ class Scene {
                     vec4.copy(colr, this.skyColor);
                 }
 
-                idx = (j * this.imgBuf.xSiz + i) * this.imgBuf.pixSiz;	// Array index at pixel (i,j) 
+                var idx = (j * this.imgBuf.xSize + i) * this.imgBuf.pixSize;	// Array index at pixel (i,j) 
                 this.imgBuf.fBuf[idx] = colr[0];
                 this.imgBuf.fBuf[idx + 1] = colr[1];
                 this.imgBuf.fBuf[idx + 2] = colr[2];

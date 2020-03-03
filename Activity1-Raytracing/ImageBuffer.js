@@ -20,7 +20,7 @@ class ImageBuffer {
                 switch (pattNum) {
                     case 0:
                         //================(Colorful L-shape)===========================
-                        if (i < this.xSiz / 4 || j < this.ySiz / 4) {
+                        if (i < this.xSize / 4 || j < this.ySize / 4) {
                             this.iBuf[idx] = i;
                             this.iBuf[idx + 1] = j;
                         }
@@ -38,7 +38,7 @@ class ImageBuffer {
                         break;
                     case 2:
                         //=================(Vertical Blue/yellow)=====================
-                        if (i > 5 * this.xSiz / 7 && j > 4 * this.ySiz / 5) {
+                        if (i > 5 * this.xSize / 7 && j > 4 * this.ySize / 5) {
                             this.iBuf[idx] = 200;
                             this.iBuf[idx + 1] = 200;
                             this.iBuf[idx + 2] = 200;
@@ -80,7 +80,7 @@ class ImageBuffer {
 
         for (var j = 0; j < this.ySize; j++) {
             for (var i = 0; i < this.xSize; i++) {
-                var idx = (j * this.xSiz + i) * this.pixSiz;
+                var idx = (j * this.xSize + i) * this.pixSize;
                 var rval = Math.min(1.0, Math.max(0.0, this.fBuf[idx]));
                 var gval = Math.min(1.0, Math.max(0.0, this.fBuf[idx + 1]));
                 var bval = Math.min(1.0, Math.max(0.0, this.fBuf[idx + 2]));

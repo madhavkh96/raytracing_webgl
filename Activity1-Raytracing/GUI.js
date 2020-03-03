@@ -1,6 +1,6 @@
 // Contains all of the User Interaction Functions
 
-class UI {
+class GUI {
     constructor() {
         this.isDrag = false;
 
@@ -15,7 +15,7 @@ class UI {
     }
 
     init() {
-        let events = this;    // (local) reference to the current GUIbox object;
+        var events = this;    // (local) reference to the current GUIbox object;
         // used in anonymous functions to restore simple
         // expected behavior of 'this' inside GUIbox functions. 
         window.addEventListener("mousedown",
@@ -29,16 +29,16 @@ class UI {
             function (mev) { return events.mouseUp(mev); });
 
         // Next, register all keyboard events found within our HTML webpage window:
-        window.addEventListener("keydown",
-            function (kev) { return events.keyDown(kev); }, false);
-        // After each 'keydown' event, call the 'myKeyDown()' function; 'false'
-        // (default) means event handler executed in  'bubbling', not 'capture')
-        // ( https://www.w3schools.com/jsref/met_document_addeventlistener.asp )
-        window.addEventListener("keyup",
-            function (kev) { return events.keyUp(kev); }, false);
-        // The 'keyDown' and 'keyUp' events respond to ALL keys on the keyboard,
-        //      including shift,alt,ctrl,arrow, pgUp, pgDn,f1,f2...f12 etc. 
-        //		  I use them for the arrow keys; insert/delete; home/end, etc.
+        //window.addEventListener("keydown",
+        //    function (kev) { return events.keyDown(kev); }, false);
+        //// After each 'keydown' event, call the 'myKeyDown()' function; 'false'
+        //// (default) means event handler executed in  'bubbling', not 'capture')
+        //// ( https://www.w3schools.com/jsref/met_document_addeventlistener.asp )
+        //window.addEventListener("keyup",
+        //    function (kev) { return events.keyUp(kev); }, false);
+        //// The 'keyDown' and 'keyUp' events respond to ALL keys on the keyboard,
+        ////      including shift,alt,ctrl,arrow, pgUp, pgDn,f1,f2...f12 etc. 
+        ////		  I use them for the arrow keys; insert/delete; home/end, etc.
         window.addEventListener("keypress",
             function (kev) { return events.keyPress(kev); }, false);
         // The 'keyPress' events respond ONLY to alpha-numeric keys, and sense any 
@@ -168,7 +168,8 @@ class UI {
     }
 
     keyPress(kev) {
-        myChar = kev.key.charAt(0); // get the char held in 'key' String
+        var myChar = kev.key.charAt(0); // get the char held in 'key' String
+
         switch (myChar) {
             //------------------Ray Tracing----------------------
             case 't':
@@ -176,11 +177,13 @@ class UI {
                 console.log("TRACE a new image!\n");
                 document.getElementById('KeyPressResult').innerHTML =
                     'GUIbox.keyPress() found t/T key. TRACE!';
+
                 g_myScene.makeRayTracedImage(); // run the ray-tracer		
-                rayView.switchToMe(); // be sure OUR VBO & shaders are in use, then
-                rayView.reload();     // re-transfer VBO contents and texture-map contents
+                raytracedView.switchToMe(); // be sure OUR VBO & shaders are in use, then
+                raytracedView.reload();     // re-transfer VBO contents and texture-map contents
                 drawAll();            // redraw BOTH viewports
                 break;
+
             case 'c':
             case 'C':
                 //			console.log("CLEAR the ray-traced image buffer.\n");
@@ -188,8 +191,8 @@ class UI {
                     'GUIbox.keyPress() found c/C key. CLEAR!';
                 g_myPic.setTestPattern(1);      // solid orange.
                 g_sceneNum = 1;       // (re-set onScene() button-handler, too)
-                rayView.switchToMe(); // be sure OUR VBO & shaders are in use, then
-                rayView.reload();     // re-transfer VBO contents and texture-map contents
+                raytracedView.switchToMe(); // be sure OUR VBO & shaders are in use, then
+                raytracedView.reload();     // re-transfer VBO contents and texture-map contents
                 drawAll();
                 break;
             //------------------WASD navigation-----------------
