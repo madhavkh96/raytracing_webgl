@@ -46,7 +46,6 @@ class Camera {
 
         this.ufrac = (this.iRight - this.iLeft) / this.xmax;	// pixel tile's width
         this.vfrac = (this.iTop - this.iBot) / this.ymax;	// pixel tile's height.
-        }
     }
 
     rayFrustrum(left, right, bot, top, near) {
