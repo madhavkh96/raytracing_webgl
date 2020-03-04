@@ -32,8 +32,8 @@ class Camera {
         this.iTop = 1.0;
         this.iNear = 1.0;
 
-        this.xmax = 256;
-        this.ymax = 256;
+        this.xmax = 512;
+        this.ymax = 512;
 
         this.ufrac = (this.iRight - this.iLeft) / this.xmax;
         this.vfrac = (this.iTop - this.iBot) / this.ymax;
@@ -45,8 +45,7 @@ class Camera {
         this.ymax = nuYmax;
 
         this.ufrac = (this.iRight - this.iLeft) / this.xmax;	// pixel tile's width
-        this.vfrac = (this.iTop - this.iBot) / this.ymax;	// pixel tile's height.
-        }
+        this.vfrac = (this.iTop - this.iBot) / this.ymax;	    // pixel tile's height.
     }
 
     rayFrustrum(left, right, bot, top, near) {
@@ -77,7 +76,6 @@ class Camera {
     setEyeRay(myRay, xpos, ypos) {
         var posU = this.iLeft + xpos * this.ufrac; 	// U coord,
         var posV = this.iBot + ypos * this.vfrac;	// V coord,
-
         var xyzPos = vec4.create();    // make vector 0,0,0,0.	
         vec4.scaleAndAdd(xyzPos, xyzPos, this.uAxis, posU); // xyzPos += Uaxis*posU;
         vec4.scaleAndAdd(xyzPos, xyzPos, this.vAxis, posV); // xyzPos += Vaxis*posU;

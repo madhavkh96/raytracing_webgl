@@ -102,20 +102,24 @@ class Scene {
         var i, j;
         var k;
 
+        var an_uf;
+        var n_pixels = 0;
+
         this.pixFlag = 0;
 
         var myHit = new Hit();
 
         for (j = 0; j < this.imgBuf.ySize; j++) {
             for (i = 0; i < this.imgBuf.xSize; i++) {
+
                 this.rayCamera.setEyeRay(this.eyeRay, i, j);
 
-                if (i == this.imgBuf.xSize / 2 && j == this.imgBuf.ySize / 4) {
-                    this.pixFlag = 1;
-                    console.log("Flags");
-                } else {
-                    this.pixFlag = 0;
-                }
+                //if (i == this.imgBuf.xSize / 2 && j == this.imgBuf.ySize / 4) {
+                //    this.pixFlag = 1;
+                //    console.log("Flags");
+                //} else {
+                //    this.pixFlag = 0;
+                //}
 
                 myHit.init();
 
@@ -123,9 +127,9 @@ class Scene {
                     this.item[k].traceShape(this.eyeRay, myHit);
                 }
 
-                if (this.pixFlag == 1) {
-                    console.log("flag: x,y:myHit", i, j, myHit);
-                }
+                //if (this.pixFlag == 1) {
+                //    console.log("flag: x,y:myHit", i, j, myHit);
+                //}
 
                 // Find eyeRay color from myHit----------------------------------------
                 if (myHit.hitNum == 0) {  // use myGrid tracing to determine color
@@ -142,9 +146,11 @@ class Scene {
                 this.imgBuf.fBuf[idx] = colr[0];
                 this.imgBuf.fBuf[idx + 1] = colr[1];
                 this.imgBuf.fBuf[idx + 2] = colr[2];
+                n_pixels++;
             }
         }
-
-        this.imgBuf.float2int();  
+        console.log(this.rayCamera.ufrac);
+        this.imgBuf.float2int();
+        console.log(n_pixels);
     }
 }
