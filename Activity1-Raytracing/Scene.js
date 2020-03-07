@@ -1,3 +1,4 @@
+
 var g_t0_MAX = 1.23E16; // The farthest possible hit point distance
 
 class Hit {
@@ -93,8 +94,10 @@ class Scene {
     }
 
     makeRayTracedImage() {
+
         this.rayCamera.rayPerspective(gui.camFovy, gui.camAspect, gui.camNear);
         this.rayCamera.rayLookAt(gui.camEyePt, gui.camAimPt, gui.camUpVec);
+
         this.setImgBuf(this.imgBuf);
 
         var colr = vec4.create();
@@ -102,53 +105,72 @@ class Scene {
         var i, j;
         var k;
 
-        var an_uf;
+        var final_colr = vec4.create();
+
         var n_pixels = 0;
 
         this.pixFlag = 0;
 
         var myHit = new Hit();
-
+        var factor = 0;
         for (j = 0; j < this.imgBuf.ySize; j++) {
             for (i = 0; i < this.imgBuf.xSize; i++) {
+                for (var a = 0; a < -g_AAcode; a++) {
 
-                this.rayCamera.setEyeRay(this.eyeRay, i, j);
+                    switch (a) {
+                        case 0:
+                            factor = 0.5;
+                            break;
+                        case 1:
+                            factor = 0.33;
+                            break;
+                        case 2:
+                            factor = 0.25;
+                            break;
+                        case 3:
+                            factor = .20;
+                            break;
+                    }
 
-                //if (i == this.imgBuf.xSize / 2 && j == this.imgBuf.ySize / 4) {
-                //    this.pixFlag = 1;
-                //    console.log("Flags");
-                //} else {
-                //    this.pixFlag = 0;
-                //}
+                this.rayCamera.setEyeRay(this.eyeRay, i + (a * factor), j + (a * factor));
+                //this.rayCamera.setEyeRay(this.eyeRay, i, j);
+                    myHit.init();
 
-                myHit.init();
+                    for (k = 0; k < this.item.length; k++) {
+                        this.item[k].traceShape(this.eyeRay, myHit);
+                    }
 
-                for (k = 0; k < this.item.length; k++) {
-                    this.item[k].traceShape(this.eyeRay, myHit);
+                    // Find eyeRay color from myHit----------------------------------------
+                    if (myHit.hitNum == 0) {  // use myGrid tracing to determine color
+                        vec4.copy(colr, myHit.hitGeom.gapColor);
+                    }
+                    else if (myHit.hitNum == 1) {
+                        vec4.copy(colr, myHit.hitGeom.lineColor);
+                    }
+                    else { // if myHit.hitNum== -1)
+                        vec4.copy(colr, this.skyColor);
+                    }
+
+                    final_colr[0] += colr[0];
+                    final_colr[1] += colr[1];
+                    final_colr[2] += colr[2];
                 }
+                    //this.eyeRay.origin = vec4.fromValues(0, 0, 0, 1);
 
-                //if (this.pixFlag == 1) {
-                //    console.log("flag: x,y:myHit", i, j, myHit);
-                //}
-
-                // Find eyeRay color from myHit----------------------------------------
-                if (myHit.hitNum == 0) {  // use myGrid tracing to determine color
-                    vec4.copy(colr, myHit.hitGeom.gapColor);
-                }
-                else if (myHit.hitNum == 1) {
-                    vec4.copy(colr, myHit.hitGeom.lineColor);
-                }
-                else { // if myHit.hitNum== -1)
-                    vec4.copy(colr, this.skyColor);
-                }
+                final_colr[0] /= -g_AAcode;
+                final_colr[1] /= -g_AAcode;
+                final_colr[2] /= -g_AAcode;
 
                 var idx = (j * this.imgBuf.xSize + i) * this.imgBuf.pixSize;	// Array index at pixel (i,j) 
+
                 this.imgBuf.fBuf[idx] = colr[0];
                 this.imgBuf.fBuf[idx + 1] = colr[1];
                 this.imgBuf.fBuf[idx + 2] = colr[2];
-                n_pixels++;
+
+                final_colr = vec4.fromValues(0, 0, 0, 0);
             }
         }
+        
         console.log(this.rayCamera.ufrac);
         this.imgBuf.float2int();
         console.log(n_pixels);
