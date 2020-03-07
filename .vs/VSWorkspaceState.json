@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Activity1-Raytracing"
+    "\\Activity1-Raytracing",
+    "\\lib"
   ],
-  "SelectedNode": "\\Activity1-Raytracing\\RayTracer.js",
+  "SelectedNode": "\\Activity1-Raytracing\\Scene.js",
   "PreviewInSolutionExplorer": false
 }

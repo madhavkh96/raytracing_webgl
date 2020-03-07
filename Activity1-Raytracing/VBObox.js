@@ -36,6 +36,8 @@ class WebGLView {
 
         this.bgnGrid = this.vboVerts;     // remember starting vertex for 'grid'
         this.appendGroundGrid();          // (see fcn below)
+        this.bgnDisk = this.vboVerts;
+        this.appendDisk(2);
 
         this.FSIZE = this.vboContents.BYTES_PER_ELEMENT;
         this.vboBytes = this.vboContents.length * this.FSIZE;
@@ -190,6 +192,80 @@ class WebGLView {
         tmp.set(vertSet, this.vboContents.length); // copy new vertSet just after it.
         this.vboVerts += vertCount;       // find number of verts in both.
         this.vboContents = tmp;           // REPLACE old vboContents with tmp
+    }
+
+    appendDisk(radius) {
+        if (radius == undefined) radius = 3;
+        this.xyMax = radius;
+        this.xCount = 11;
+        this.yCount = 11;	
+
+        var vertsPerLine = 2; 
+        this.floatsPerVertex = 8;
+
+        var vertCount = (this.xCount + this.yCount) * vertsPerLine;
+        var vertSet = new Float32Array(vertCount * this.floatsPerVertex); 
+
+        var xColr = vec4.fromValues(1.0, 1.0, 0.3, 1.0);
+        var yColr = vec4.fromValues(0.3, 1.0, 1.0, 1.0);
+
+        var xgap = 2 * this.xyMax / (this.xCount - 2);
+        var ygap = 2 * this.xyMax / (this.yCount - 2);
+
+        var xNow;
+        var yNow;
+        var diff;
+        var line = 0;
+
+        var v = 0;
+        var idx = 0;    
+
+        for (line = 0; line < this.xCount; line++) {
+            xNow = -this.xyMax + (line + 0.5) * xgap;
+            diff = Math.sqrt(radius * radius - xNow * xNow);
+            for (var i = 0; i < vertsPerLine; i++ , v++ , idx += this.floatsPerVertex) { // for every vertex in this line,  find x,y,z,w;  r,g,b,a;
+                // and store them sequentially in vertSet[] array.
+                // we already know the xNow value for this vertex; find the yNow:
+                if (i == 0) yNow = -diff;  // line start
+                else yNow = diff;       // line end.
+                // set all values for this vertex:
+                vertSet[idx] = xNow;            // x value
+                vertSet[idx + 1] = yNow;            // y value
+                vertSet[idx + 2] = 0.0;             // z value
+                vertSet[idx + 3] = 1.0;             // w;
+                vertSet[idx + 4] = xColr[0];  // r
+                vertSet[idx + 5] = xColr[1];  // g
+                vertSet[idx + 6] = xColr[2];  // b
+                vertSet[idx + 7] = xColr[3];  // a;
+            }
+        }
+
+        for (line = 0; line < this.yCount; line++) {   // for every line of constant y,
+            yNow = -this.xyMax + (line + 0.5) * ygap;       // find the y-value of this line,  
+            diff = Math.sqrt(radius * radius - yNow * yNow);  // find +/- y-value of this line,  
+            for (var i = 0; i < vertsPerLine; i++ , v++ , idx += this.floatsPerVertex) { // for every vertex in this line,  find x,y,z,w;  r,g,b,a;
+                // and store them sequentially in vertSet[] array.
+                // We already know  yNow; find the xNow:
+                if (i == 0) xNow = -diff;  // line start
+                else xNow = diff;       // line end.
+                // Set all values for this vertex:
+                vertSet[idx] = xNow;            // x value
+                vertSet[idx + 1] = yNow;            // y value
+                vertSet[idx + 2] = 0.0;             // z value
+                vertSet[idx + 3] = 1.0;             // w;
+                vertSet[idx + 4] = yColr[0];  // r
+                vertSet[idx + 5] = yColr[1];  // g
+                vertSet[idx + 6] = yColr[2];  // b
+                vertSet[idx + 7] = yColr[3];  // a;
+            }
+        }
+        // Now APPEND this to existing VBO contents:
+        // Make a new array (local) big enough to hold BOTH vboContents & vertSet:
+        var tmp = new Float32Array(this.vboContents.length + vertSet.length);
+        tmp.set(this.vboContents, 0);     // copy old VBOcontents into tmp, and
+        tmp.set(vertSet, this.vboContents.length); // copy new vertSet just after it.
+        this.vboVerts += vertCount;       // find number of verts in both.
+        this.vboContents = tmp;   
     }
 
     init() {
