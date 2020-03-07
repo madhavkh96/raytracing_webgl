@@ -115,20 +115,36 @@ class Scene {
         var factor = 0;
         for (j = 0; j < this.imgBuf.ySize; j++) {
             for (i = 0; i < this.imgBuf.xSize; i++) {
-                for (var a = 0; a < -g_AAcode; a++) {
+                for (var a = 0; a < g_AAcode; a++) {
 
-                    switch (a) {
-                        case 0:
-                            factor = 0.5;
-                            break;
+                    switch (g_AAcode) {
                         case 1:
-                            factor = 0.33;
+                            if (g_isJitter == 0) {
+                                factor = 0.5;
+                            } else {
+                                factor = 0.5 * Math.random();
+                            }
                             break;
                         case 2:
-                            factor = 0.25;
+                            if (g_isJitter == 0) {
+                                factor = 0.33;
+                            } else {
+                                factor = 0.33 * Math.random();
+                            }
                             break;
                         case 3:
-                            factor = .20;
+                            if (g_isJitter == 0) {
+                                factor = 0.25;
+                            } else {
+                                factor = 0.25 * Math.random();
+                            }
+                            break;
+                        case 4:
+                            if (g_isJitter == 0) {
+                                factor = .20;
+                            } else {
+                                factor = 0.20 * Math.random();
+                            }
                             break;
                     }
 
@@ -157,15 +173,15 @@ class Scene {
                 }
                     //this.eyeRay.origin = vec4.fromValues(0, 0, 0, 1);
 
-                final_colr[0] /= -g_AAcode;
-                final_colr[1] /= -g_AAcode;
-                final_colr[2] /= -g_AAcode;
+                final_colr[0] /= g_AAcode;
+                final_colr[1] /= g_AAcode;
+                final_colr[2] /= g_AAcode;
 
                 var idx = (j * this.imgBuf.xSize + i) * this.imgBuf.pixSize;	// Array index at pixel (i,j) 
 
-                this.imgBuf.fBuf[idx] = colr[0];
-                this.imgBuf.fBuf[idx + 1] = colr[1];
-                this.imgBuf.fBuf[idx + 2] = colr[2];
+                this.imgBuf.fBuf[idx] = final_colr[0];
+                this.imgBuf.fBuf[idx + 1] = final_colr[1];
+                this.imgBuf.fBuf[idx + 2] = final_colr[2];
 
                 final_colr = vec4.fromValues(0, 0, 0, 0);
             }

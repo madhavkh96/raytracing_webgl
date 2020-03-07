@@ -74,8 +74,8 @@ class Camera {
     }
 
     setEyeRay(myRay, xpos, ypos) {
-        var posU = (this.iLeft + xpos * this.ufrac); 	// U coord,
-        var posV = (this.iBot + ypos * this.vfrac);	// V coord,
+        var posU = this.iLeft + xpos * this.ufrac; 	// U coord,
+        var posV = this.iBot + ypos * this.vfrac;	// V coord,
         var xyzPos = vec4.create();    // make vector 0,0,0,0.	
         vec4.scaleAndAdd(xyzPos, xyzPos, this.uAxis, posU); // xyzPos += Uaxis*posU;
         vec4.scaleAndAdd(xyzPos, xyzPos, this.vAxis, posV); // xyzPos += Vaxis*posU;

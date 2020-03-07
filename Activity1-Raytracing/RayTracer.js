@@ -17,7 +17,9 @@ var g_SceneNum = 0;
 
 var G_SCENE_MAX = 3;
 
-var g_AAcode = -1;  // -1, -2, -3, -4 == No Jitter Super Sampled
+var g_AAcode = 1;  // -1, -2, -3, -4 == No Jitter Super Sampled
+
+var g_isJitter = 0;
 
 var G_AA_MAX = 4;
 
@@ -72,23 +74,32 @@ function drawAll() {
 function onSuperSampleButton() {
     //=============================================================================
     //console.log('ON-SuperSample BUTTON!');
-    if (g_AAcode < 0) {  // next-lower antialiasing code, but >= -G_AA_MAX.
-        g_AAcode = -g_AAcode;							// remove the negative sign.
-        g_AAcode = 1 + (g_AAcode % G_AA_MAX); // 1,2,3,4,1,2,3,4,1,2, etc
-        g_AAcode = -g_AAcode;							// restore the negative sign.
-        // Display results on-screen:
-        console.log(-g_AAcode + 'x' + -g_AAcode + ' Supersampling; NO jitter.');
-        document.getElementById('AAreport').innerHTML =
-            -g_AAcode + 'x' + -g_AAcode + ' Supersampling, NO jitter.';
+    g_AAcode += 1;
+    if (g_AAcode > G_AA_MAX) g_AAcode = 1; 
+    if (g_AAcode == 1) {
+        if (g_isJitter == 0) {
+            document.getElementById('AAreport').innerHTML =
+                "1 sample/pixel. No jitter.";
+            console.log("1 sample/pixel. No Jitter.");
+        }
+        else {
+            document.getElementById('AAreport').innerHTML =
+                "1 sample/pixel, but jittered.";
+            console.log("1 sample/pixel, but jittered.")
+        }
     }
-    else {		// next-higher antialiasing code, but <= G_AA_MAX
-        g_AAcode = 1 + (g_AAcode % G_AA_MAX);	// 1,2,3,4,1,2,3,4, etc.
-        // Display results on-screen:
-        console.log('Jittered ' + g_AAcode + 'x' + g_AAcode + ' Supersampling.');
-        document.getElementById('AAreport').innerHTML =
-            'Jittered ' + g_AAcode + 'x' + g_AAcode + ' Supersampling.';
+    else { // g_AAcode !=1
+        if (g_isJitter == 0) {
+            document.getElementById('AAreport').innerHTML =
+                g_AAcode + "x" + g_AAcode + " Supersampling. No jitter.";
+            console.log(g_AAcode, "x", g_AAcode, "Supersampling. No Jitter.");
+        }
+        else {
+            document.getElementById('AAreport').innerHTML =
+                g_AAcode + "x" + g_AAcode + " JITTERED Supersampling";
+            console.log(g_AAcode, "x", g_AAcode, " JITTERED Supersampling.");
+        }
     }
-
     //Increase the Image Buffer Size Approach
     //g_myPic = new ImageBuffer(2**9 * (2**-g_AAcode), 2**9 * (2**-g_AAcode));
     //raytracedView.init();
@@ -102,16 +113,32 @@ function onSuperSampleButton() {
 function onJitterButton() {
     //=============================================================================
     console.log('ON-JITTER button!!');
-    g_AAcode = -g_AAcode;		// flip the sign:
-    if (g_AAcode < 0) {  	// Revise on-screen report
-        console.log(-g_AAcode, 'x', -g_AAcode, ' Supersampling; NO jitter.');
-        document.getElementById('AAreport').innerHTML =
-            -g_AAcode + 'x' + -g_AAcode + ' Supersampling, NO jitter.';
+    if (g_isJitter == 0) g_isJitter = 1;
+    else g_isJitter = 0;
+
+    if (g_AAcode == 1) {
+        if (g_isJitter == 0) {
+            document.getElementById('AAreport').innerHTML =
+                "1 sample/pixel. No jitter.";
+            console.log("1 sample/pixel. No Jitter.");
+        }
+        else {
+            document.getElementById('AAreport').innerHTML =
+                "1 sample/pixel, but jittered.";
+            console.log("1 sample/pixel, but jittered.")
+        }
     }
-    else {
-        console.log('Jittered ', g_AAcode, 'x', g_AAcode, ' Supersampling.');
-        document.getElementById('AAreport').innerHTML =
-            'Jittered ' + g_AAcode + 'x' + g_AAcode + ' Supersampling.';
+    else { // g_AAcode !=0
+        if (g_isJitter == 0) {
+            document.getElementById('AAreport').innerHTML =
+                g_AAcode + "x" + g_AAcode + " Supersampling. No jitter.";
+            console.log(g_AAcode, "x", g_AAcode, "Supersampling. No Jitter.");
+        }
+        else {
+            document.getElementById('AAreport').innerHTML =
+                g_AAcode + "x" + g_AAcode + " JITTERED Supersampling";
+            console.log(g_AAcode, "x", g_AAcode, " JITTERED Supersampling.");
+        }
     }
 }
 
