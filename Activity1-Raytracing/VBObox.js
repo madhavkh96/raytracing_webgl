@@ -1,3 +1,4 @@
+
 // VBO BOX 
 
 class WebGLView {
@@ -374,7 +375,18 @@ class WebGLView {
         gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
 
         mat4.copy(this.mvpMat, temp);
-        gl.drawArrays(gl.LINES, 0, this.vboVerts);
+        gl.drawArrays(gl.LINES, 0, this.bgnDisk);
+
+        var temp = mat4.create();
+        mat4.copy(temp, this.mvpMat);
+
+        mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, 0.0, 2.0));
+        mat4.rotate(this.mvpMat, this.mvpMat, 0.25 * Math.PI, vec3.fromValues(1, 0, 0));
+
+        gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+        mat4.copy(this.mvpMat, temp);
+
+        gl.drawArrays(gl.LINES, this.bgnDisk, this.vboVerts - this.bgnDisk);
     }
 
     reload() {

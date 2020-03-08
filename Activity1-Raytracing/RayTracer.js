@@ -1,4 +1,3 @@
-
 var gl;
 
 var g_canvasID;
@@ -100,15 +99,6 @@ function onSuperSampleButton() {
             console.log(g_AAcode, "x", g_AAcode, " JITTERED Supersampling.");
         }
     }
-    //Increase the Image Buffer Size Approach
-    //g_myPic = new ImageBuffer(2**9 * (2**-g_AAcode), 2**9 * (2**-g_AAcode));
-    //raytracedView.init();
-    //g_myScene.initScene(0);
-    //g_myScene.makeRayTracedImage();
-    //drawAll();
-    //raytracedView.switchToMe();
-    //raytracedView.reload();
-    //drawAll();
 }
 function onJitterButton() {
     //=============================================================================

@@ -17,14 +17,22 @@ class Hit {
         this.viewN = vec4.create();
 
         this.isEntering = true;
+
         this.modelHitPt = vec4.create();
+
+        this.hitPtList = [];
+
         this.colr = vec4.clone(g_myScene.skyColor);
     }
 
     init() {
         this.hitGeom = -1;
+
         this.hitNum = -1;
+
         this.t0 = g_t0_MAX;
+
+        this.hitPtList = [];
 
         vec4.set(this.hitPt, this.t0, 0, 0, 1);
 
@@ -35,8 +43,6 @@ class Hit {
         vec4.copy(this.modelHitPt, this.hitPt);
     }
 
-
-    //Why? we need this. we already have items[] in the Scene Class.
 
     hitList() {
         //=============================================================================
@@ -50,6 +56,9 @@ class Hit {
         //  -- 'iEnd' index selects the next available CHit object at the end of
         //      our current list in the pierce[] array. if iEnd=0, the list is empty.
         //  -- 'iNearest' index selects the CHit object nearest the ray's origin point.
+
+
+
     }
 }
 
@@ -61,8 +70,10 @@ class Scene {
 
         this.eyeRay = new Ray();
         this.rayCamera = new Camera();
+        this.worldLight = new Light();
 
         this.item = [];
+
     }
 
     setImgBuf(nuImg) {
@@ -81,9 +92,23 @@ class Scene {
 
         this.item.length = 0;
 
+        var iNow = -1;
+
         switch (num) {
             case 0:
+                //Ground Plane
                 this.item.push(new Geometery(RT_GNDPLANE));
+                iNow = this.item.length - 1;
+
+                //Add the disk
+                this.item.push(new Geometery(RT_DISK));
+                iNow = this.item.length - 1;
+
+                //Add the transformations as done in WebGL Build
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, 0, 2.0);
+                this.item[iNow].rayRotate(0.75 * Math.PI, 1, 0, 0);
+
                 break;
             case 1:
                 break;
@@ -107,12 +132,14 @@ class Scene {
 
         var final_colr = vec4.create();
 
-        var n_pixels = 0;
 
         this.pixFlag = 0;
 
         var myHit = new Hit();
-        var factor = 0;
+
+        var x_factor = 0;
+        var y_factor = 0;
+
         for (j = 0; j < this.imgBuf.ySize; j++) {
             for (i = 0; i < this.imgBuf.xSize; i++) {
                 for (var a = 0; a < g_AAcode; a++) {
@@ -120,36 +147,43 @@ class Scene {
                     switch (g_AAcode) {
                         case 1:
                             if (g_isJitter == 0) {
-                                factor = 0.5;
+                                x_factor = 0.5;
+                                y_factor = 0.5;
                             } else {
-                                factor = 0.5 * Math.random();
+                                x_factor = 0.5 * Math.random();
+                                y_factor = 0.5;
                             }
                             break;
                         case 2:
                             if (g_isJitter == 0) {
-                                factor = 0.33;
+                                x_factor = 0.33;
+                                y_factor = 0.33;
                             } else {
-                                factor = 0.33 * Math.random();
+                                x_factor = 0.33 * Math.random();
+                                y_factor = 0.33;
                             }
                             break;
                         case 3:
                             if (g_isJitter == 0) {
-                                factor = 0.25;
+                                x_factor = 0.25;
+                                y_factor = 0.25;
                             } else {
-                                factor = 0.25 * Math.random();
+                                x_factor = 0.25 * Math.random();
+                                y_factor = 0.25;
                             }
                             break;
                         case 4:
                             if (g_isJitter == 0) {
-                                factor = .20;
+                                x_factor = 0.20;
+                                y_factor = 0.20;
                             } else {
-                                factor = 0.20 * Math.random();
+                                x_factor = 0.20 * Math.random();
+                                y_factor = 0.20;
                             }
                             break;
                     }
 
-                this.rayCamera.setEyeRay(this.eyeRay, i + (a * factor), j + (a * factor));
-                //this.rayCamera.setEyeRay(this.eyeRay, i, j);
+                    this.rayCamera.setEyeRay(this.eyeRay, i + (a * x_factor), j + (a * y_factor));
                     myHit.init();
 
                     for (k = 0; k < this.item.length; k++) {
@@ -167,16 +201,25 @@ class Scene {
                         vec4.copy(colr, this.skyColor);
                     }
 
+                    this.worldLight.findShade(colr, myHit, this.item);
+
                     final_colr[0] += colr[0];
                     final_colr[1] += colr[1];
                     final_colr[2] += colr[2];
                 }
-                    //this.eyeRay.origin = vec4.fromValues(0, 0, 0, 1);
 
                 final_colr[0] /= g_AAcode;
                 final_colr[1] /= g_AAcode;
                 final_colr[2] /= g_AAcode;
 
+
+
+                if (i == this.imgBuf.xSize / 2 && j == this.imgBuf.ySize / 4) {
+                    console.log(myHit.hitGeom);
+                    console.log(myHit.t0);
+                    //this.worldLight.findShade(colr, myHit, this.item);
+                    console.log(myHit.hitPt);
+                }
                 var idx = (j * this.imgBuf.xSize + i) * this.imgBuf.pixSize;	// Array index at pixel (i,j) 
 
                 this.imgBuf.fBuf[idx] = final_colr[0];
@@ -186,9 +229,6 @@ class Scene {
                 final_colr = vec4.fromValues(0, 0, 0, 0);
             }
         }
-        
-        console.log(this.rayCamera.ufrac);
         this.imgBuf.float2int();
-        console.log(n_pixels);
     }
 }
