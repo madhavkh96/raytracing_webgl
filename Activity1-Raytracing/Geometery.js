@@ -1,3 +1,4 @@
+
 // Available Geometery for the current Raytracer
 const RT_GNDPLANE = 0;
 const RT_DISK = 1;
@@ -63,9 +64,9 @@ class Geometery{
         t = 1 - c;
 
         // Construct the elements of the 3x3 rotation matrix. b_rowCol
-        b00 = x * x * t + c; b01 = y * x * t + z * s; b02 = z * x * t - y * s;
-        b10 = x * y * t - z * s; b11 = y * y * t + c; b12 = z * y * t + x * s;
-        b20 = x * z * t + y * s; b21 = y * z * t - x * s; b22 = z * z * t + c;
+        b00 = x * x * t + c;     b01 = y * x * t - z * s;   b02 = z * x * t + y * s;
+        b10 = x * y * t + z * s; b11 = y * y * t + c;       b12 = z * y * t - x * s;
+        b20 = x * z * t - y * s; b21 = y * z * t + x * s;   b22 = z * z * t + c;
         var b = mat4.create();  // build 4x4 rotation matrix from these
         b[0] = b00; b[4] = b01; b[8] = b02; b[12] = 0.0; // row0
         b[1] = b10; b[5] = b11; b[9] = b12; b[13] = 0.0; // row1
@@ -119,7 +120,6 @@ class Geometery{
                 this.diskRad = 1.5;   // radius of disk centered at origin
 
                 vec4.transformMat4(rayT.origin, inRay.origin, this.worldRay2model);
-
                 vec4.transformMat4(rayT.dir, inRay.dir, this.worldRay2model);
 
                 this.lineColor = vec4.fromValues(0.6, 0.1, 0.0, 1.0);
@@ -139,80 +139,103 @@ class Geometery{
 
         //point is behind camera or further away than the already hit point. Hence no need to update 
         //the value for that point.
-        if (t0 < 0 || t0 > hit.t0) {
+        if (t0 < 0 || t0 > hit.t0 || t0 < 1E-7) {
             return;
         }
 
         //Check for the hit to geometery
         switch (this.shapeType) {
             case RT_GNDPLANE:
-                hit.hitPtList.push(t0);
 
                 hit.t0 = t0;
+
+                hit.hitList.push(this);
 
                 hit.hitGeom = this;
 
                 vec4.scaleAndAdd(hit.modelHitPt, rayT.origin, rayT.dir, hit.t0);
 
                 vec4.copy(hit.hitPt, hit.modelHitPt);
+
+                //vec4.scaleAndAdd(hit.hitPt, inRay.origin, inRay.dir, hit.t0);
 
                 vec4.negate(hit.viewN, inRay.dir);
 
                 vec4.normalize(hit.viewN, hit.viewN);
 
                 vec4.set(hit.surfNorm, 0, 0, 1, 0);
-                break;
-            case RT_DISK:
-                var modelHit = vec4.create();
-                vec4.scaleAndAdd(modelHit, rayT.origin, rayT.dir, t0);
-                if (modelHit[0] * modelHit[0] + modelHit[1] * modelHit[1] > this.diskRad * this.diskRad) {
+
+
+                //For x-gap
+                var loc = hit.modelHitPt[0] / this.xgap;
+                if (hit.modelHitPt[0] < 0) loc = -loc;
+                if (loc % 1 < this.lineWidth) {
+                    hit.hitNum = 1;                     // Hit
                     return;
                 }
 
-                hit.hitPtList.push(t0);
+                //For y-gap
+                loc = hit.modelHitPt[1] / this.ygap;
+                if (hit.modelHitPt[1] < 0) loc = -loc;
+                if (loc % 1 < this.lineWidth) {
+                    hit.hitNum = 1;                     // Hit
+                    return;
+                }
+
+                hit.hitNum = 0;                         // Doesn't Hit
+                return;
+                break;
+            case RT_DISK:
+                var modelHit = vec4.create();
+
+                vec4.scaleAndAdd(modelHit, rayT.origin, rayT.dir, t0);
+
+                if (modelHit[0] * modelHit[0] + modelHit[1] * modelHit[1] > this.diskRad * this.diskRad) {
+                    return;
+                }
 
                 hit.t0 = t0;
 
                 hit.hitGeom = this;
 
-                vec4.copy(hit.hitPt, hit.modelHitPt);
+                hit.hitList.push(this);
 
-                vec4.scaleAndAdd(hit.modelHitPt, rayT.origin, rayT.dir, hit.t0);
+                vec4.copy(hit.modelHitPt, modelHit);
+
+                vec4.scaleAndAdd(hit.hitPt, inRay.origin, inRay.dir, t0);
 
                 vec4.negate(hit.viewN, inRay.dir);
+
+                vec4.normalize(hit.viewN, hit.viewN);
 
                 vec4.transformMat4(hit.surfNorm, vec4.fromValues(0, 0, 1, 0), this.normal2World);
 
                 vec4.normalize(hit.surfNorm, hit.surfNorm);
+
+                //For x-gap
+                var loc = hit.modelHitPt[0] / this.xgap;
+                if (hit.modelHitPt[0] < 0) loc = -loc;
+                if (loc % 1 < this.lineWidth) {
+                    hit.hitNum = 0;                     // Hit
+                    return;
+                }
+
+                //For y-gap
+                loc = hit.modelHitPt[1] / this.ygap;
+                if (hit.modelHitPt[1] < 0) loc = -loc;
+                if (loc % 1 < this.lineWidth) {
+                    hit.hitNum = 0;                     // Hit
+                    return;
+                }
+
+                hit.hitNum = 1;                         // Doesn't Hit
+                return;
                 break;
             default:
                 //No Transformations
                 break;
         }
 
-        
-
-   
-
-        //For x-gap
-        var loc = hit.modelHitPt[0] / this.xgap;
-        if (hit.modelHitPt[0] < 0) loc = -loc;
-        if (loc % 1 < this.lineWidth) {
-            hit.hitNum = 1;                     // Hits
-            return;
-        }
-
-        //For y-gap
-        loc = hit.modelHitPt[1] / this.ygap;
-        if (hit.modelHitPt[1] < 0) loc = -loc;
-        if (loc % 1 < this.lineWidth) {
-            hit.hitNum = 1;                     // Hits
-            return;
-        }
-
-        hit.hitNum = 0;                         // Doesn't Hit
-        return;
+      
     }
-
-
 }

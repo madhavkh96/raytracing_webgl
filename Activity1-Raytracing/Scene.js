@@ -20,7 +20,7 @@ class Hit {
 
         this.modelHitPt = vec4.create();
 
-        this.hitPtList = [];
+        this.hitList = [];
 
         this.colr = vec4.clone(g_myScene.skyColor);
     }
@@ -32,7 +32,7 @@ class Hit {
 
         this.t0 = g_t0_MAX;
 
-        this.hitPtList = [];
+        this.hitList = [];
 
         vec4.set(this.hitPt, this.t0, 0, 0, 1);
 
@@ -107,7 +107,7 @@ class Scene {
                 //Add the transformations as done in WebGL Build
                 this.item[iNow].setIdentity();
                 this.item[iNow].rayTranslate(0, 0, 2.0);
-                this.item[iNow].rayRotate(0.75 * Math.PI, 1, 0, 0);
+                this.item[iNow].rayRotate(0.25 * Math.PI, 1, 0, 0);
 
                 break;
             case 1:
@@ -134,7 +134,7 @@ class Scene {
 
 
         this.pixFlag = 0;
-
+        var cont = true;
         var myHit = new Hit();
 
         var x_factor = 0;
@@ -184,6 +184,7 @@ class Scene {
                     }
 
                     this.rayCamera.setEyeRay(this.eyeRay, i + (a * x_factor), j + (a * y_factor));
+
                     myHit.init();
 
                     for (k = 0; k < this.item.length; k++) {
@@ -201,23 +202,26 @@ class Scene {
                         vec4.copy(colr, this.skyColor);
                     }
 
-                    this.worldLight.findShade(colr, myHit, this.item);
+                    this.worldLight.findShade(colr, myHit, this.item, cont);
 
                     final_colr[0] += colr[0];
                     final_colr[1] += colr[1];
                     final_colr[2] += colr[2];
                 }
 
+                if (!cont)
+                    break;
+
                 final_colr[0] /= g_AAcode;
                 final_colr[1] /= g_AAcode;
                 final_colr[2] /= g_AAcode;
-
 
 
                 if (i == this.imgBuf.xSize / 2 && j == this.imgBuf.ySize / 4) {
                     console.log(myHit.hitGeom);
                     console.log(myHit.t0);
                     //this.worldLight.findShade(colr, myHit, this.item);
+                    console.log(myHit.hitList);
                     console.log(myHit.hitPt);
                 }
                 var idx = (j * this.imgBuf.xSize + i) * this.imgBuf.pixSize;	// Array index at pixel (i,j) 
@@ -228,6 +232,8 @@ class Scene {
 
                 final_colr = vec4.fromValues(0, 0, 0, 0);
             }
+            if (!cont)
+                break;
         }
         this.imgBuf.float2int();
     }
