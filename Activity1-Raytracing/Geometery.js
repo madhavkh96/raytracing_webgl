@@ -1,3 +1,4 @@
+//import { vec4 } from "../lib/glmatrix";
 
 // Available Geometery for the current Raytracer
 const RT_GNDPLANE = 0;
@@ -8,18 +9,19 @@ const RT_CYLINDER = 4;
 const RT_TRIANGLE = 5;
 const RT_BLOBBY = 6;
 
-class Geometery{
+class Geometery {
     constructor(selectedShape) {
 
         if (selectedShape == undefined) selectedShape = RT_GNDPLANE;
         this.shapeType = selectedShape;
 
-        this.traceMe = function (inR, hit) { this.traceShape(inR, hit) }
+        //this.traceShape = function (inR, hit, shadow) { this.traceShape(inR, hit, shadow) }
 
         this.worldRay2model = mat4.create();
 
         this.normal2World = mat4.create();
 
+        this.surfaceProperties = new SurfaceDetails();
 
         this.xgap = 1.0;	// line-to-line spacing
         this.ygap = 1.0;
@@ -43,6 +45,26 @@ class Geometery{
         mat4.transpose(this.normal2World, this.worldRay2model);
     }
 
+    setDiffuse(r, g, b) {
+        this.surfaceProperties.diff_I = vec4.fromValues(r, g, b, 1.0);
+    }
+
+    setAmbient(r, g, b) {
+        this.surfaceProperties.ambi_I = vec4.fromValues(r, g, b, 1.0);
+    }
+
+    setSpecular(r, g, b) {
+        this.surfaceProperties.spec_I = vec4.fromValues(r, g, b, 1.0);
+    }
+
+    setEmissive(r, g, b) {
+        this.surfaceProperties.emiss_I = vec4.fromValues(r, g, b, 1.0);
+    }
+
+    setShine(shine) {
+        this.surfaceProperties.shine = shine;
+    }
+
     rayRotate(rad, ax, ay, az) {
         var x = ax, y = ay, z = az,
             len = Math.sqrt(x * x + y * y + z * z),
@@ -64,9 +86,9 @@ class Geometery{
         t = 1 - c;
 
         // Construct the elements of the 3x3 rotation matrix. b_rowCol
-        b00 = x * x * t + c;     b01 = y * x * t - z * s;   b02 = z * x * t + y * s;
-        b10 = x * y * t + z * s; b11 = y * y * t + c;       b12 = z * y * t - x * s;
-        b20 = x * z * t - y * s; b21 = y * z * t + x * s;   b22 = z * z * t + c;
+        b00 = x * x * t + c; b01 = x * y * t - z * s; b02 = x * z * t + y * s;
+        b10 = y * x * t + z * s; b11 = y * y * t + c; b12 = y * z * t - x * s;
+        b20 = z * x * t - y * s; b21 = z * y * t + x * s; b22 = z * z * t + c;
         var b = mat4.create();  // build 4x4 rotation matrix from these
         b[0] = b00; b[4] = b01; b[8] = b02; b[12] = 0.0; // row0
         b[1] = b10; b[5] = b11; b[9] = b12; b[13] = 0.0; // row1
@@ -93,7 +115,7 @@ class Geometery{
         mat4.transpose(this.normal2World, this.worldRay2model);
     }
 
-    traceShape(inRay, hit) {
+    traceShape(inRay, hit, shadow) {
 
         //Default values for gap and line width
         this.d_xgap = 1.0;	// line-to-line spacing
@@ -101,6 +123,7 @@ class Geometery{
         this.d_linewidth = 0.1;
 
         var rayT = new Ray();
+
         vec4.copy(rayT.origin, inRay.origin);
         vec4.copy(rayT.dir, inRay.dir);
 
@@ -113,39 +136,21 @@ class Geometery{
                 this.lineColor = vec4.fromValues(0.1, 0.1, 0.1, 1.0);  // RGBA green(A==opacity)
                 this.gapColor = vec4.fromValues(0.9, 0.9, 0.9, 1.0);  // near-white
                 this.skyColor = vec4.fromValues(0.3, 1.0, 1.0, 1.0);  // cyan/bright blue
-                break
-            case RT_DISK:
-                // 2D Disk defaults:----------------------------------------------------------
-                // uses many of the same parameters as Ground-plane grid, except:
-                this.diskRad = 1.5;   // radius of disk centered at origin
 
-                vec4.transformMat4(rayT.origin, inRay.origin, this.worldRay2model);
-                vec4.transformMat4(rayT.dir, inRay.dir, this.worldRay2model);
-
-                this.lineColor = vec4.fromValues(0.6, 0.1, 0.0, 1.0);
-
-                this.xgap = this.d_xgap * 61 / 107;
-                this.ygap = this.d_ygap * 61 / 107;
-                this.lineWidth = this.d_linewidth * 3.0;//this.lineWidth*3.0;
-                break;
-            default:
-                console.log("Geometery.TraceFn INVALUE SHAPE INPUT");
-
-        }
-
-        //Find the t0 value == where ray hits the shape at z=0;
-        var t0 = (-rayT.origin[2]) / rayT.dir[2];
+                //Find the t0 value == where ray hits the shape at z=0;
+                var t0 = (-rayT.origin[2]) / rayT.dir[2];
 
 
-        //point is behind camera or further away than the already hit point. Hence no need to update 
-        //the value for that point.
-        if (t0 < 0 || t0 > hit.t0 || t0 < 1E-7) {
-            return;
-        }
+                //point is behind camera or further away than the already hit point. Hence no need to update 
+                //the value for that point.
+                if (t0 < 0 || t0 > hit.t0) {
+                    return;
+                }
 
-        //Check for the hit to geometery
-        switch (this.shapeType) {
-            case RT_GNDPLANE:
+                if (shadow) {
+                    hit.shadow = true;
+                    return;
+                }
 
                 hit.t0 = t0;
 
@@ -157,13 +162,15 @@ class Geometery{
 
                 vec4.copy(hit.hitPt, hit.modelHitPt);
 
-                //vec4.scaleAndAdd(hit.hitPt, inRay.origin, inRay.dir, hit.t0);
+                vec4.scaleAndAdd(hit.hitPt, inRay.origin, inRay.dir, hit.t0);
 
                 vec4.negate(hit.viewN, inRay.dir);
 
                 vec4.normalize(hit.viewN, hit.viewN);
 
-                vec4.set(hit.surfNorm, 0, 0, 1, 0);
+                vec4.transformMat4(hit.surfNorm, vec4.fromValues(0, 0, 1, 0), this.normal2World);
+
+                hit.surfaceProperties = this.surfaceProperties;
 
 
                 //For x-gap
@@ -183,9 +190,31 @@ class Geometery{
                 }
 
                 hit.hitNum = 0;                         // Doesn't Hit
-                return;
                 break;
             case RT_DISK:
+                // 2D Disk defaults:----------------------------------------------------------
+                // uses many of the same parameters as Ground-plane grid, except:
+                this.diskRad = 1.5;   // radius of disk centered at origin
+
+                vec4.transformMat4(rayT.origin, inRay.origin, this.worldRay2model);
+                vec4.transformMat4(rayT.dir, inRay.dir, this.worldRay2model);
+
+                this.lineColor = vec4.fromValues(0.6, 0.1, 0.0, 1.0);
+
+                this.xgap = this.d_xgap * 61 / 107;
+                this.ygap = this.d_ygap * 61 / 107;
+                this.lineWidth = this.d_linewidth * 3.0;//this.lineWidth*3.0;
+
+                //Find the t0 value == where ray hits the shape at z=0;
+                var t0 = (-rayT.origin[2]) / rayT.dir[2];
+
+
+                //point is behind camera or further away than the already hit point. Hence no need to update 
+                //the value for that point.
+                if (t0 < 0 || t0 > hit.t0) {
+                    return;
+                }
+
                 var modelHit = vec4.create();
 
                 vec4.scaleAndAdd(modelHit, rayT.origin, rayT.dir, t0);
@@ -193,6 +222,12 @@ class Geometery{
                 if (modelHit[0] * modelHit[0] + modelHit[1] * modelHit[1] > this.diskRad * this.diskRad) {
                     return;
                 }
+
+                if (shadow) {
+                    hit.shadow = true;
+                    return;
+                }
+
 
                 hit.t0 = t0;
 
@@ -205,6 +240,8 @@ class Geometery{
                 vec4.scaleAndAdd(hit.hitPt, inRay.origin, inRay.dir, t0);
 
                 vec4.negate(hit.viewN, inRay.dir);
+
+                hit.surfaceProperties = this.surfaceProperties;
 
                 vec4.normalize(hit.viewN, hit.viewN);
 
@@ -231,11 +268,75 @@ class Geometery{
                 hit.hitNum = 1;                         // Doesn't Hit
                 return;
                 break;
-            default:
-                //No Transformations
-                break;
-        }
+            case RT_SPHERE:
 
-      
+                vec4.transformMat4(rayT.origin, inRay.origin, this.worldRay2model);
+                vec4.transformMat4(rayT.dir, inRay.dir, this.worldRay2model);
+
+                var r2s = vec4.create();
+                vec4.subtract(r2s, vec4.fromValues(0, 0, 0, 1), rayT.origin);
+
+                var L2 = vec3.dot(r2s, r2s);
+
+                if (L2 <= 1.0) {
+                    console.log("CGeom.traceSphere() ERROR! rayT origin at or inside sphere!\n\n", );
+                    return;
+                }
+
+                var tcaS = vec3.dot(rayT.dir, r2s);
+                if (tcaS < 0.0) {
+                    //console.log("tcas is less\n\n");
+                    return;
+                }
+
+                var DL2 = vec3.dot(rayT.dir, rayT.dir);
+                var tca2 = tcaS * tcaS / DL2;
+
+                var LM2 = L2 - tca2;
+
+                if (LM2 > 1.0) {
+                    //console.log("LM2 is less\n\n");
+                    return;
+                }
+
+                var L2hc = (1.0 - LM2);
+
+                var t0hit = tcaS / DL2 - Math.sqrt(L2hc / DL2);  // closer of the 2 hit-points.
+
+                if (t0hit > hit.t0) {    // is this new hit-point CLOSER than 'hit'?
+                    return;       // NO.  DON'T change hit, don't do any further calcs. Bye!
+                }
+
+                if (shadow) {
+                    hit.shadow = true;
+                    return;
+                }
+
+                hit.t0 = t0hit;
+                hit.hitGeom = this;
+
+                vec4.scaleAndAdd(hit.modelHitPt, rayT.origin, rayT.dir, hit.t0);
+
+                vec4.scaleAndAdd(hit.hitPt, inRay.origin, inRay.dir, hit.t0);
+
+                hit.surfaceProperties = this.surfaceProperties;
+
+                vec4.negate(hit.viewN, inRay.dir);
+
+                vec4.normalize(hit.viewN, hit.viewN);
+
+                vec4.subtract(hit.surfNorm, hit.modelHitPt, vec4.fromValues(0, 0, 0, 1));
+
+                //vec4.transformMat4(hit.surfNorm, hit.modelHitPt, this.normal2World);
+
+                vec4.normalize(hit.surfNorm, hit.surfNorm);
+
+                hit.hitNum = 1;
+                //console.log('hit :', hit);
+                break;
+            default:
+                console.log("Geometery.TraceFn INVALUE SHAPE INPUT");
+
+        }
     }
 }

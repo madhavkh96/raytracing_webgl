@@ -143,8 +143,9 @@ function onSceneButton() {
     // Change g_myPic contents:
     g_myPic.setTestPattern(g_SceneNum);
     // transfer g_myPic's new contents to the GPU;
-    rayView.switchToMe(); // be sure OUR VBO & shaders are in use, then
-    rayView.reload();     // re-transfer VBO contents and texture-map contents
+    g_myScene.initScene(g_SceneNum);
+    raytracedView.switchToMe(); // be sure OUR VBO & shaders are in use, then
+    raytracedView.reload();     // re-transfer VBO contents and texture-map contents
     drawAll();
 }
 

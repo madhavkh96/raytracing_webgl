@@ -1,3 +1,4 @@
+//import { vec3, mat4 } from "../lib/glmatrix";
 
 // VBO BOX 
 
@@ -37,8 +38,12 @@ class WebGLView {
 
         this.bgnGrid = this.vboVerts;     // remember starting vertex for 'grid'
         this.appendGroundGrid();          // (see fcn below)
+
         this.bgnDisk = this.vboVerts;
         this.appendDisk(2);
+
+        this.bgnSphere = this.vboVerts;
+        this.appendSphere();
 
         this.FSIZE = this.vboContents.BYTES_PER_ELEMENT;
         this.vboBytes = this.vboContents.length * this.FSIZE;
@@ -269,6 +274,133 @@ class WebGLView {
         this.vboContents = tmp;   
     }
 
+    appendSphere(NScount) {
+        if (NScount == undefined) NScount = 13;    // default value.
+        if (NScount < 3) NScount = 3;              // enforce minimums
+        var EWcount = 2 * (NScount);
+        console.log("VBObox0.appendLineSphere() EWcount, NScount:", EWcount, ", ", NScount);
+
+        //Set vertex contents:----------------------------------------
+        /*  ALREADY SET in VBObox0 constructor
+            this.floatsPerVertex = 8;  // x,y,z,w;  r,g,b,a values.
+        */
+
+        //Create (local) vertSet[] array-----------------------------
+        var vertCount = 2 * EWcount * NScount;
+        var vertSet = new Float32Array(vertCount * this.floatsPerVertex);
+        // This array holds two sets of vertices:
+        // --the NScount rings of EWcount vertices each, where each ring
+        //    forms a circle of constant z (NSfrac determines the z value), and
+        // --the EWcount arcs of NScount vertices each, where each arc 
+        //    forms a half-circle from south-pole to north-pole at constant EWfrac
+        //console.log("VBObox0.appendLineSphere() vertCount, floatsPerVertex:", vertCount, ", ", this.floatsPerVertex);
+
+        // Set Vertex Colors--------------------------------------
+        // The sphere consists of horizontal rings and vertical half-circle arcs.
+        // Each North-to-South arc has constant fracEW and constant color, but that
+        // color varies linearly from EWbgnColr found at fracEW==0 up to EWendColr 
+        // found at fracEW==0.5 and then back down to EWbgnColr at fracEW==1.
+        // Each East-West ring has constant fracNS and constant color, but that 
+        // color varies linearly from NSbgnColr found at fracNS==0 (e.g. south pole)
+        // up to NSendColr found at fracNS==1 (north pole).
+        this.EWbgnColr = vec4.fromValues(1.0, 0.5, 0.0, 1.0);	  // Orange
+        this.EWendColr = vec4.fromValues(0.0, 0.5, 1.0, 1.0);   // Cyan
+        this.NSbgnColr = vec4.fromValues(1.0, 1.0, 1.0, 1.0);	  // White
+        this.NSendColr = vec4.fromValues(0.0, 1.0, 0.5, 1.0);   // White
+
+        // Compute how much the color changes between 1 arc (or ring) and the next:
+        var EWcolrStep = vec4.create();  // [0,0,0,0]
+        var NScolrStep = vec4.create();
+
+        vec4.subtract(EWcolrStep, this.EWendColr, this.EWbgnColr); // End - Bgn
+        vec4.subtract(NScolrStep, this.NSendColr, this.NSbgnColr);
+        vec4.scale(EWcolrStep, EWcolrStep, 2.0 / (EWcount - 1)); // double-step for arc colors
+        vec4.scale(NScolrStep, NScolrStep, 1.0 / (NScount - 1)); // single-step for ring colors
+
+        // Local vars for vertex-making loops-------------------
+        var EWgap = 1.0 / (EWcount - 1);		  // vertex spacing in each ring of constant NS 
+        // (be sure last vertex doesn't overlap 1st)
+        var NSgap = 1.0 / (NScount - 1);		// vertex spacing in each North-South arc
+        // (1st vertex at south pole; last at north pole)
+        var EWint = 0;        // east/west integer (0 to EWcount) for current vertex,
+        var NSint = 0;        // north/south integer (0 to NScount) for current vertex.
+        var v = 0;          // vertex-counter, used for the entire sphere;
+        var idx = 0;        // vertSet[] array index.
+        var pos = vec4.create();    // vertex position.
+        var colrNow = vec4.create();   // color of the current arc or ring.
+
+        //----------------------------------------------------------------------------
+        // 1st BIG LOOP: makes all horizontal rings of constant NSfrac.
+        for (NSint = 0; NSint < NScount; NSint++) { // for every ring of constant NSfrac,
+            colrNow = vec4.scaleAndAdd(               // find the color of this ring;
+                colrNow, this.NSbgnColr, NScolrStep, NSint);
+            for (EWint = 0; EWint < EWcount; EWint++ , v++ , idx += this.floatsPerVertex) {
+                // for every vertex in this ring, find x,y,z,w;  r,g,b,a;
+                // and store them sequentially in vertSet[] array.
+                // Find vertex position from normalized lattitude & longitude:
+                this.polar2xyz(pos, // vec4 that holds vertex position in world-space x,y,z;
+                    EWint * EWgap,  // normalized East/west longitude (from 0 to 1)
+                    NSint * NSgap); // normalized North/South lattitude (from 0 to 1)      
+                // now set the vertex values in the array:
+                vertSet[idx] = pos[0];            // x value
+                vertSet[idx + 1] = pos[1];            // y value
+                vertSet[idx + 2] = pos[2];            // z value
+                vertSet[idx + 3] = 1.0;               // w (it's a point, not a vector)
+                vertSet[idx + 4] = colrNow[0];  // r
+                vertSet[idx + 5] = colrNow[1];  // g
+                vertSet[idx + 6] = colrNow[2];  // b
+                vertSet[idx + 7] = colrNow[3];  // a;
+            }
+        }
+
+        //----------------------------------------------------------------------------
+        // 2nd BIG LOOP: makes all vertical arcs of constant EWfrac.
+        for (EWint = 0; EWint < EWcount; EWint++) { // for every arc of constant EWfrac,
+            // find color of the arc:
+            if (EWint < EWcount / 2) {   // color INCREASES for first hemisphere of arcs:        
+                colrNow = vec4.scaleAndAdd(
+                    colrNow, this.EWbgnColr, EWcolrStep, EWint);
+            }
+            else {  // color DECREASES for second hemisphere of arcs:
+                colrNow = vec4.scaleAndAdd(
+                    colrNow, this.EWbgnColr, EWcolrStep, EWcount - EWint);
+            }
+            for (NSint = 0; NSint < NScount; NSint++ , v++ , idx += this.floatsPerVertex) {
+                // for every vertex in this arc, find x,y,z,w;  r,g,b,a;
+                // and store them sequentially in vertSet[] array.
+                // Find vertex position from normalized lattitude & longitude:
+                this.polar2xyz(pos, // vec4 that holds vertex position in world-space x,y,z;
+                    EWint * EWgap,  // normalized East/west longitude (from 0 to 1)
+                    NSint * NSgap); // normalized North/South lattitude (from 0 to 1)      
+                // now set the vertex values in the array:
+                vertSet[idx] = pos[0];            // x value
+                vertSet[idx + 1] = pos[1];            // y value
+                vertSet[idx + 2] = pos[2];            // z value
+                vertSet[idx + 3] = 1.0;               // w (it's a point, not a vector)
+                vertSet[idx + 4] = colrNow[0];  // r
+                vertSet[idx + 5] = colrNow[1];  // g
+                vertSet[idx + 6] = colrNow[2];  // b
+                vertSet[idx + 7] = colrNow[3];  // a;
+            }
+        }
+
+        var tmp = new Float32Array(this.vboContents.length + vertSet.length);
+        tmp.set(this.vboContents, 0);     // copy old VBOcontents into tmp, and
+        tmp.set(vertSet, this.vboContents.length); // copy new vertSet just after it.
+        this.vboVerts += vertCount;       // find number of verts in both.
+        this.vboContents = tmp;           // REPLACE old vboContents with tmp
+    }
+
+    polar2xyz(out4, fracEW, fracNS) {
+        var sEW = Math.sin(2.0 * Math.PI * fracEW);
+        var cEW = Math.cos(2.0 * Math.PI * fracEW);
+        var sNS = Math.sin(Math.PI * fracNS);
+        var cNS = Math.cos(Math.PI * fracNS);
+        vec4.set(out4, cEW * sNS,      // x = cos(EW)sin(NS);
+            sEW * sNS,      // y = sin(EW)sin(NS);
+            cNS, 1.0);      // z =        cos(NS); w=1.0  (point, not vec)
+    }
+
     init() {
         this.shaderLoc = createProgram(gl, this.VERT_SRC, this.FRAG_SRC);
         if (!this.shaderLoc) {
@@ -367,26 +499,109 @@ class WebGLView {
         if (this.isReady() == false) {
             console.log('ERROR! before' + this.constructor.name +
                 '.draw() call you needed to call this.switchToMe()!!');
-        }  
+        }
+        switch (g_SceneNum) {
+            case 0:
+                //Ground Grid
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
 
-        var temp = mat4.create();
-        mat4.copy(temp, this.mvpMat);
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
 
-        gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+                mat4.copy(this.mvpMat, temp);
+                gl.drawArrays(gl.LINES, 0, this.bgnDisk);
 
-        mat4.copy(this.mvpMat, temp);
-        gl.drawArrays(gl.LINES, 0, this.bgnDisk);
+                //Disk
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
 
-        var temp = mat4.create();
-        mat4.copy(temp, this.mvpMat);
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, 0.0, 2.0));
+                mat4.rotate(this.mvpMat, this.mvpMat, 0.25 * Math.PI, vec3.fromValues(1, 0, 0));
 
-        mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, 0.0, 2.0));
-        mat4.rotate(this.mvpMat, this.mvpMat, 0.25 * Math.PI, vec3.fromValues(1, 0, 0));
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+                mat4.copy(this.mvpMat, temp);
 
-        gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
-        mat4.copy(this.mvpMat, temp);
+                gl.drawArrays(gl.LINES, this.bgnDisk, this.bgnSphere - this.bgnDisk);
 
-        gl.drawArrays(gl.LINES, this.bgnDisk, this.vboVerts - this.bgnDisk);
+                //Sphere
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
+
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, 0.0, 6.0));
+
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+                mat4.copy(this.mvpMat, temp);
+
+                gl.drawArrays(gl.LINES, this.bgnSphere, this.vboVerts - this.bgnSphere);
+                break;
+            case 1:
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
+
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+
+                mat4.copy(this.mvpMat, temp);
+                gl.drawArrays(gl.LINES, 0, this.bgnDisk);
+
+                //sphere 1
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
+
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, 0.0, 6.0));
+
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+                mat4.copy(this.mvpMat, temp);
+
+                gl.drawArrays(gl.LINES, this.bgnSphere, this.vboVerts - this.bgnSphere);
+
+                //sphere 2
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
+
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, -1.0, 3.0));
+
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+                mat4.copy(this.mvpMat, temp);
+
+                gl.drawArrays(gl.LINES, this.bgnSphere, this.vboVerts - this.bgnSphere);
+                break;
+            case 2:
+
+                //Ground Plane
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
+
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+
+                mat4.copy(this.mvpMat, temp);
+                gl.drawArrays(gl.LINES, 0, this.bgnDisk);
+
+                //Disk 1
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
+
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, 0.0, 2.0));
+                mat4.rotate(this.mvpMat, this.mvpMat, 0.25 * Math.PI, vec3.fromValues(1, 0, 0));
+
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+                mat4.copy(this.mvpMat, temp);
+
+                gl.drawArrays(gl.LINES, this.bgnDisk, this.bgnSphere - this.bgnDisk);
+
+                //Disk 2
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
+
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, -1.0, 2.0));
+                mat4.rotate(this.mvpMat, this.mvpMat, 0.75 * Math.PI, vec3.fromValues(1, 0, 0));
+
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+                mat4.copy(this.mvpMat, temp);
+
+                gl.drawArrays(gl.LINES, this.bgnDisk, this.bgnSphere - this.bgnDisk);
+                break;
+        }
+
     }
 
     reload() {

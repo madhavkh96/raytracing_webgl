@@ -1,5 +1,15 @@
-
 var g_t0_MAX = 1.23E16; // The farthest possible hit point distance
+
+
+class SurfaceDetails{
+    constructor() {
+        this.ambi_I = vec4.fromValues(0.1, 0.1, 0.55, 1);
+        this.diff_I = vec4.fromValues(0.0, 0.0, 0.55, 1);
+        this.spec_I = vec4.fromValues(0.6, 0.6, 0.6, 1);
+        this.emiss_I = vec4.fromValues(0, 0, 0, 1);
+        this.shine = 100;
+    }
+}
 
 class Hit {
     constructor() {
@@ -16,11 +26,15 @@ class Hit {
 
         this.viewN = vec4.create();
 
+        this.surfaceProperties = new SurfaceDetails();
+
         this.isEntering = true;
 
         this.modelHitPt = vec4.create();
 
         this.hitList = [];
+
+        this.shadow = false;
 
         this.colr = vec4.clone(g_myScene.skyColor);
     }
@@ -33,6 +47,10 @@ class Hit {
         this.t0 = g_t0_MAX;
 
         this.hitList = [];
+
+        this.surfaceProperties = new SurfaceDetails();
+
+        this.shadow = false;
 
         vec4.set(this.hitPt, this.t0, 0, 0, 1);
 
@@ -71,6 +89,7 @@ class Scene {
         this.eyeRay = new Ray();
         this.rayCamera = new Camera();
         this.worldLight = new Light();
+        this.headLight = new Light();
 
         this.item = [];
 
@@ -100,6 +119,13 @@ class Scene {
                 this.item.push(new Geometery(RT_GNDPLANE));
                 iNow = this.item.length - 1;
 
+
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.4, 0.1, 0.1);
+                this.item[iNow].setDiffuse(0.6, 0.0, 0.0);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
                 //Add the disk
                 this.item.push(new Geometery(RT_DISK));
                 iNow = this.item.length - 1;
@@ -109,8 +135,107 @@ class Scene {
                 this.item[iNow].rayTranslate(0, 0, 2.0);
                 this.item[iNow].rayRotate(0.25 * Math.PI, 1, 0, 0);
 
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
+                //Add Sphere
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, 0, 6.0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.5, 0.0);
+                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.6, 0.6, 0.6);
+                this.item[iNow].setShine(100.0);
+
                 break;
             case 1:
+                this.item.push(new Geometery(RT_GNDPLANE));
+                iNow = this.item.length - 1;
+
+
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.4, 0.4, 0.1);
+                this.item[iNow].setDiffuse(0.6, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, 0, 6.0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.6, 0.6, 0.6);
+                this.item[iNow].setShine(60.0);
+
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, -1.0, 3.0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.6, 0.6, 0.6);
+                this.item[iNow].setShine(60.0);
+                break;
+            case 2:
+                this.item.push(new Geometery(RT_GNDPLANE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.0, 0.4, 0.4);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.6);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(60.0);
+
+                //Add the disk
+                this.item.push(new Geometery(RT_DISK));
+                iNow = this.item.length - 1;
+
+                //Add the transformations as done in WebGL Build
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, 0, 2.0);
+                this.item[iNow].rayRotate(0.25 * Math.PI, 1, 0, 0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.0, 0.1, 0.4);
+                this.item[iNow].setDiffuse(0.0, 0.2, 0.8);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
+                //Add the disk
+                this.item.push(new Geometery(RT_DISK));
+                iNow = this.item.length - 1;
+
+                //Add the transformations as done in WebGL Build
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, -1.0, 2.0);
+                this.item[iNow].rayRotate(0.75 * Math.PI, 1, 0, 0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.125, 0.05, 0.2);
+                this.item[iNow].setAmbient(0.25, 0.1, 0.4);
+                this.item[iNow].setDiffuse(0.5, 0.2, 0.8);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
                 break;
             default:
                 this.init(0);
@@ -188,25 +313,45 @@ class Scene {
                     myHit.init();
 
                     for (k = 0; k < this.item.length; k++) {
-                        this.item[k].traceShape(this.eyeRay, myHit);
+                        this.item[k].traceShape(this.eyeRay, myHit, false);
                     }
 
-                    // Find eyeRay color from myHit----------------------------------------
-                    if (myHit.hitNum == 0) {  // use myGrid tracing to determine color
-                        vec4.copy(colr, myHit.hitGeom.gapColor);
-                    }
-                    else if (myHit.hitNum == 1) {
-                        vec4.copy(colr, myHit.hitGeom.lineColor);
-                    }
-                    else { // if myHit.hitNum== -1)
-                        vec4.copy(colr, this.skyColor);
-                    }
+                   
+                    //// Find eyeRay color from myHit----------------------------------------
+                    //if (myHit.hitNum == 0) {  // use myGrid tracing to determine color
+                    //    vec4.copy(colr, myHit.hitGeom.gapColor);
+                    //}
+                    //else if (myHit.hitNum == 1) {
+                    //    vec4.copy(colr, myHit.hitGeom.lineColor);
+                    //}
+                    //else { // if myHit.hitNum== -1)
+                    //    vec4.copy(colr, this.skyColor);
+                    //}
 
-                    this.worldLight.findShade(colr, myHit, this.item, cont);
+                    this.worldLight.phong(colr, myHit, this.eyeRay, this.item);
+
+                    //this.worldLight.findShade(colr, myHit, this.item, cont, this.eyeRay);
+
+                    //if (myHit.hitGeom.shapeType == RT_SPHERE) {
+                    //    colr[0] = 0.4;
+                    //    colr[1] = 0.0;
+                    //    colr[2] = 0.0;
+                    //}
+
 
                     final_colr[0] += colr[0];
                     final_colr[1] += colr[1];
                     final_colr[2] += colr[2];
+
+                    if (i == this.imgBuf.xSize / 2 && j == this.imgBuf.ySize / 4) {
+                        console.log(myHit);
+                        console.log(myHit.t0);
+                        console.log(colr);
+                        console.log(myHit.hitList);
+                        console.log(this.worldLight.hitPointDir);
+                    }
+
+                    colr = vec4.fromValues(0, 0, 0, 1);
                 }
 
                 if (!cont)
@@ -217,13 +362,6 @@ class Scene {
                 final_colr[2] /= g_AAcode;
 
 
-                if (i == this.imgBuf.xSize / 2 && j == this.imgBuf.ySize / 4) {
-                    console.log(myHit.hitGeom);
-                    console.log(myHit.t0);
-                    //this.worldLight.findShade(colr, myHit, this.item);
-                    console.log(myHit.hitList);
-                    console.log(myHit.hitPt);
-                }
                 var idx = (j * this.imgBuf.xSize + i) * this.imgBuf.pixSize;	// Array index at pixel (i,j) 
 
                 this.imgBuf.fBuf[idx] = final_colr[0];

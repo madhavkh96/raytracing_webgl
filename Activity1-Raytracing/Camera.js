@@ -1,3 +1,6 @@
+
+const RAY_EPSILON = 1.0E-5;
+
 class Ray{
     constructor() {
         //Always construct with default values as origin and going downwards.
