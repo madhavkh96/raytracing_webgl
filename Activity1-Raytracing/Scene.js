@@ -1,5 +1,15 @@
-
 var g_t0_MAX = 1.23E16; // The farthest possible hit point distance
+
+
+class SurfaceDetails{
+    constructor() {
+        this.ambi_I = vec4.fromValues(0.1, 0.1, 0.55, 1);
+        this.diff_I = vec4.fromValues(0.0, 0.0, 0.55, 1);
+        this.spec_I = vec4.fromValues(0.6, 0.6, 0.6, 1);
+        this.emiss_I = vec4.fromValues(0, 0, 0, 1);
+        this.shine = 100;
+    }
+}
 
 class Hit {
     constructor() {
@@ -16,15 +26,31 @@ class Hit {
 
         this.viewN = vec4.create();
 
+        this.surfaceProperties = new SurfaceDetails();
+
         this.isEntering = true;
+
         this.modelHitPt = vec4.create();
+
+        this.hitList = [];
+
+        this.shadow = false;
+
         this.colr = vec4.clone(g_myScene.skyColor);
     }
 
     init() {
         this.hitGeom = -1;
+
         this.hitNum = -1;
+
         this.t0 = g_t0_MAX;
+
+        this.hitList = [];
+
+        this.surfaceProperties = new SurfaceDetails();
+
+        this.shadow = false;
 
         vec4.set(this.hitPt, this.t0, 0, 0, 1);
 
@@ -35,8 +61,6 @@ class Hit {
         vec4.copy(this.modelHitPt, this.hitPt);
     }
 
-
-    //Why? we need this. we already have items[] in the Scene Class.
 
     hitList() {
         //=============================================================================
@@ -50,6 +74,9 @@ class Hit {
         //  -- 'iEnd' index selects the next available CHit object at the end of
         //      our current list in the pierce[] array. if iEnd=0, the list is empty.
         //  -- 'iNearest' index selects the CHit object nearest the ray's origin point.
+
+
+
     }
 }
 
@@ -61,8 +88,11 @@ class Scene {
 
         this.eyeRay = new Ray();
         this.rayCamera = new Camera();
+        this.worldLight = new Light();
+        this.headLight = new Light();
 
         this.item = [];
+
     }
 
     setImgBuf(nuImg) {
@@ -81,11 +111,131 @@ class Scene {
 
         this.item.length = 0;
 
+        var iNow = -1;
+
         switch (num) {
             case 0:
+                //Ground Plane
                 this.item.push(new Geometery(RT_GNDPLANE));
+                iNow = this.item.length - 1;
+
+
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.4, 0.1, 0.1);
+                this.item[iNow].setDiffuse(0.6, 0.0, 0.0);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
+                //Add the disk
+                this.item.push(new Geometery(RT_DISK));
+                iNow = this.item.length - 1;
+
+                //Add the transformations as done in WebGL Build
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, 0, 2.0);
+                this.item[iNow].rayRotate(0.25 * Math.PI, 1, 0, 0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
+                //Add Sphere
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, 0, 6.0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.5, 0.0);
+                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.6, 0.6, 0.6);
+                this.item[iNow].setShine(100.0);
+
                 break;
             case 1:
+                this.item.push(new Geometery(RT_GNDPLANE));
+                iNow = this.item.length - 1;
+
+
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.4, 0.4, 0.1);
+                this.item[iNow].setDiffuse(0.6, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, 0, 6.0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.6, 0.6, 0.6);
+                this.item[iNow].setShine(60.0);
+
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, -1.0, 3.0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
+                this.item[iNow].setSpecular(0.6, 0.6, 0.6);
+                this.item[iNow].setShine(60.0);
+                break;
+            case 2:
+                this.item.push(new Geometery(RT_GNDPLANE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.0, 0.4, 0.4);
+                this.item[iNow].setDiffuse(0.0, 0.6, 0.6);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(60.0);
+
+                //Add the disk
+                this.item.push(new Geometery(RT_DISK));
+                iNow = this.item.length - 1;
+
+                //Add the transformations as done in WebGL Build
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, 0, 2.0);
+                this.item[iNow].rayRotate(0.25 * Math.PI, 1, 0, 0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.0, 0.1, 0.4);
+                this.item[iNow].setDiffuse(0.0, 0.2, 0.8);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
+                //Add the disk
+                this.item.push(new Geometery(RT_DISK));
+                iNow = this.item.length - 1;
+
+                //Add the transformations as done in WebGL Build
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, -1.0, 2.0);
+                this.item[iNow].rayRotate(0.75 * Math.PI, 1, 0, 0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.125, 0.05, 0.2);
+                this.item[iNow].setAmbient(0.25, 0.1, 0.4);
+                this.item[iNow].setDiffuse(0.5, 0.2, 0.8);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(100.0);
+
                 break;
             default:
                 this.init(0);
@@ -107,12 +257,14 @@ class Scene {
 
         var final_colr = vec4.create();
 
-        var n_pixels = 0;
 
         this.pixFlag = 0;
-
+        var cont = true;
         var myHit = new Hit();
-        var factor = 0;
+
+        var x_factor = 0;
+        var y_factor = 0;
+
         for (j = 0; j < this.imgBuf.ySize; j++) {
             for (i = 0; i < this.imgBuf.xSize; i++) {
                 for (var a = 0; a < g_AAcode; a++) {
@@ -120,62 +272,95 @@ class Scene {
                     switch (g_AAcode) {
                         case 1:
                             if (g_isJitter == 0) {
-                                factor = 0.5;
+                                x_factor = 0.5;
+                                y_factor = 0.5;
                             } else {
-                                factor = 0.5 * Math.random();
+                                x_factor = 0.5 * Math.random();
+                                y_factor = 0.5;
                             }
                             break;
                         case 2:
                             if (g_isJitter == 0) {
-                                factor = 0.33;
+                                x_factor = 0.33;
+                                y_factor = 0.33;
                             } else {
-                                factor = 0.33 * Math.random();
+                                x_factor = 0.33 * Math.random();
+                                y_factor = 0.33;
                             }
                             break;
                         case 3:
                             if (g_isJitter == 0) {
-                                factor = 0.25;
+                                x_factor = 0.25;
+                                y_factor = 0.25;
                             } else {
-                                factor = 0.25 * Math.random();
+                                x_factor = 0.25 * Math.random();
+                                y_factor = 0.25;
                             }
                             break;
                         case 4:
                             if (g_isJitter == 0) {
-                                factor = .20;
+                                x_factor = 0.20;
+                                y_factor = 0.20;
                             } else {
-                                factor = 0.20 * Math.random();
+                                x_factor = 0.20 * Math.random();
+                                y_factor = 0.20;
                             }
                             break;
                     }
 
-                this.rayCamera.setEyeRay(this.eyeRay, i + (a * factor), j + (a * factor));
-                //this.rayCamera.setEyeRay(this.eyeRay, i, j);
+                    this.rayCamera.setEyeRay(this.eyeRay, i + (a * x_factor), j + (a * y_factor));
+
                     myHit.init();
 
                     for (k = 0; k < this.item.length; k++) {
-                        this.item[k].traceShape(this.eyeRay, myHit);
+                        this.item[k].traceShape(this.eyeRay, myHit, false);
                     }
 
-                    // Find eyeRay color from myHit----------------------------------------
-                    if (myHit.hitNum == 0) {  // use myGrid tracing to determine color
-                        vec4.copy(colr, myHit.hitGeom.gapColor);
-                    }
-                    else if (myHit.hitNum == 1) {
-                        vec4.copy(colr, myHit.hitGeom.lineColor);
-                    }
-                    else { // if myHit.hitNum== -1)
-                        vec4.copy(colr, this.skyColor);
-                    }
+                   
+                    //// Find eyeRay color from myHit----------------------------------------
+                    //if (myHit.hitNum == 0) {  // use myGrid tracing to determine color
+                    //    vec4.copy(colr, myHit.hitGeom.gapColor);
+                    //}
+                    //else if (myHit.hitNum == 1) {
+                    //    vec4.copy(colr, myHit.hitGeom.lineColor);
+                    //}
+                    //else { // if myHit.hitNum== -1)
+                    //    vec4.copy(colr, this.skyColor);
+                    //}
+
+                    this.worldLight.phong(colr, myHit, this.eyeRay, this.item);
+
+                    //this.worldLight.findShade(colr, myHit, this.item, cont, this.eyeRay);
+
+                    //if (myHit.hitGeom.shapeType == RT_SPHERE) {
+                    //    colr[0] = 0.4;
+                    //    colr[1] = 0.0;
+                    //    colr[2] = 0.0;
+                    //}
+
 
                     final_colr[0] += colr[0];
                     final_colr[1] += colr[1];
                     final_colr[2] += colr[2];
+
+                    if (i == this.imgBuf.xSize / 2 && j == this.imgBuf.ySize / 4) {
+                        console.log(myHit);
+                        console.log(myHit.t0);
+                        console.log(colr);
+                        console.log(myHit.hitList);
+                        console.log(this.worldLight.hitPointDir);
+                    }
+
+                    colr = vec4.fromValues(0, 0, 0, 1);
                 }
-                    //this.eyeRay.origin = vec4.fromValues(0, 0, 0, 1);
+
+                if (!cont)
+                    break;
 
                 final_colr[0] /= g_AAcode;
                 final_colr[1] /= g_AAcode;
                 final_colr[2] /= g_AAcode;
+
 
                 var idx = (j * this.imgBuf.xSize + i) * this.imgBuf.pixSize;	// Array index at pixel (i,j) 
 
@@ -185,10 +370,9 @@ class Scene {
 
                 final_colr = vec4.fromValues(0, 0, 0, 0);
             }
+            if (!cont)
+                break;
         }
-        
-        console.log(this.rayCamera.ufrac);
         this.imgBuf.float2int();
-        console.log(n_pixels);
     }
 }

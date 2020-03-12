@@ -1,4 +1,3 @@
-
 var gl;
 
 var g_canvasID;
@@ -100,15 +99,6 @@ function onSuperSampleButton() {
             console.log(g_AAcode, "x", g_AAcode, " JITTERED Supersampling.");
         }
     }
-    //Increase the Image Buffer Size Approach
-    //g_myPic = new ImageBuffer(2**9 * (2**-g_AAcode), 2**9 * (2**-g_AAcode));
-    //raytracedView.init();
-    //g_myScene.initScene(0);
-    //g_myScene.makeRayTracedImage();
-    //drawAll();
-    //raytracedView.switchToMe();
-    //raytracedView.reload();
-    //drawAll();
 }
 function onJitterButton() {
     //=============================================================================
@@ -153,8 +143,9 @@ function onSceneButton() {
     // Change g_myPic contents:
     g_myPic.setTestPattern(g_SceneNum);
     // transfer g_myPic's new contents to the GPU;
-    rayView.switchToMe(); // be sure OUR VBO & shaders are in use, then
-    rayView.reload();     // re-transfer VBO contents and texture-map contents
+    g_myScene.initScene(g_SceneNum);
+    raytracedView.switchToMe(); // be sure OUR VBO & shaders are in use, then
+    raytracedView.reload();     // re-transfer VBO contents and texture-map contents
     drawAll();
 }
 
