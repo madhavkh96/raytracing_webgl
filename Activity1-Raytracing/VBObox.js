@@ -1,3 +1,4 @@
+
 //import { vec3, mat4 } from "../lib/glmatrix";
 
 // VBO BOX 
@@ -501,7 +502,7 @@ class WebGLView {
                 '.draw() call you needed to call this.switchToMe()!!');
         }
         switch (g_SceneNum) {
-            case 0:
+            case 1:
                 //Ground Grid
                 var temp = mat4.create();
                 mat4.copy(temp, this.mvpMat);
@@ -534,7 +535,7 @@ class WebGLView {
 
                 gl.drawArrays(gl.LINES, this.bgnSphere, this.vboVerts - this.bgnSphere);
                 break;
-            case 1:
+            case 0:
                 var temp = mat4.create();
                 mat4.copy(temp, this.mvpMat);
 
@@ -547,7 +548,7 @@ class WebGLView {
                 var temp = mat4.create();
                 mat4.copy(temp, this.mvpMat);
 
-                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, 0.0, 6.0));
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, 0.0, 1.0));
 
                 gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
                 mat4.copy(this.mvpMat, temp);
@@ -558,12 +559,25 @@ class WebGLView {
                 var temp = mat4.create();
                 mat4.copy(temp, this.mvpMat);
 
-                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, -1.0, 3.0));
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(-1.0, 2.5, 1.0));
 
                 gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
                 mat4.copy(this.mvpMat, temp);
 
                 gl.drawArrays(gl.LINES, this.bgnSphere, this.vboVerts - this.bgnSphere);
+
+                //Sphere 3
+
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
+
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(-3.0, 0.0, 1.0));
+
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+                mat4.copy(this.mvpMat, temp);
+
+                gl.drawArrays(gl.LINES, this.bgnSphere, this.vboVerts - this.bgnSphere);
+
                 break;
             case 2:
 

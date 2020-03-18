@@ -12,6 +12,16 @@ class GUI {
 
         this.xMdragTot = 0.0;
         this.yMdragTot = 0.0;
+
+     
+
+        var ResGUI = function () {
+
+        }
+
+        var ReflectionGUI = function () {
+
+        }
     }
 
     init() {
@@ -49,6 +59,8 @@ class GUI {
         document.getElementById('MouseDragResult').innerHTML =
             'Mouse Drag totals (CVV coords):\t' +
             this.xMdragTot.toFixed(5) + ', \t' + this.yMdragTot.toFixed(5);
+
+        window.onload = showDatGUI();
 
         // Camera-Navigation:----------------------------------
         // Initialize our camera aiming parameters using yaw-pitch sphere method.
@@ -281,4 +293,49 @@ class GUI {
         drawAll();
     }
 
+    
+
+    
+   
+
+}
+
+var AAGUI = function () {
+    this.anti_aliasing = g_AAcode;
+
+    this.reload = function () {
+
+        g_AAcode = this.anti_aliasing;
+        console.log(g_AAcode);
+        g_myScene.makeRayTracedImage();
+        raytracedView.switchToMe();
+        raytracedView.reload();
+        drawAll();
+    }
+}
+
+var ReflectionGUI = function () {
+    this.recursions = 1;
+
+    this.reload = function () {
+        g_recusrionsNum = this.recursions;
+    }
+}
+
+
+showDatGUI = function () {
+
+    var AAFolder = new AAGUI();
+    var gui = new dat.GUI();
+    //var ResFolder = new ResGUI();
+
+    var ReflectFolder = new ReflectionGUI();
+
+    var AA = gui.addFolder('Anti-Aliasing');
+    AA.add(AAFolder, 'anti_aliasing', { One_X_One: 1, Two_X_Two: 2, Three_X_Three: 3, Four_X_Four: 4 });
+    AA.add(AAFolder, 'reload');
+
+    var Reflections = gui.addFolder('Recursions');
+    Reflections.add(ReflectFolder, 'recursions', { One: 1, Two: 2, Three: 3, Four: 4 });
+    Reflections.add(ReflectFolder, 'reload');
 }
