@@ -141,7 +141,7 @@ class Scene {
                 this.item[iNow].setEmissive(0.0, 0.0, 0.0);
                 this.item[iNow].setAmbient(0.05, 0.05, 0.05);
                 this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
-                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setSpecular(1.0, 1.0, 1.0);
                 this.item[iNow].setShine(100.0);
 
                 //Add Sphere
@@ -262,7 +262,6 @@ class Scene {
     }
 
     makeRayTracedImage() {
-
         this.rayCamera.rayPerspective(gui.camFovy, gui.camAspect, gui.camNear);
         this.rayCamera.rayLookAt(gui.camEyePt, gui.camAimPt, gui.camUpVec);
 

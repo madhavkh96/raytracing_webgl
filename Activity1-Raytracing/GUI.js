@@ -72,6 +72,10 @@ class GUI {
                 g_myScene.worldLight.ChangeSpecular(this.light_specular);
                 g_myScene.worldLight.ChangeAmbient(this.light_ambient);
                 g_myScene.worldLight.UpdatePosition(this.x_Position, this.y_Position, this.z_Position);
+
+                this.light_diffuse = [255, 255, 255];
+                this.light_ambient = [255, 255, 255];
+                this.light_specular = [255, 255, 255];
             }
         }
 
@@ -244,10 +248,10 @@ class GUI {
             //------------------Ray Tracing----------------------
             case 't':
             case 'T':
-                console.log("TRACE a new image!\n");
+                //console.log("TRACE a new image!\n");
                 document.getElementById('KeyPressResult').innerHTML =
                     'GUIbox.keyPress() found t/T key. TRACE!';
-                console.log('Recursions : ', g_recusrionsNum, 'Anti-aliased:', g_AAcode);
+                //console.log('Recursions : ', g_recusrionsNum, 'Anti-aliased:', g_AAcode);
                 g_myScene.makeRayTracedImage(); // run the ray-tracer		
                 raytracedView.switchToMe(); // be sure OUR VBO & shaders are in use, then
                 raytracedView.reload();     // re-transfer VBO contents and texture-map contents
@@ -372,7 +376,7 @@ class GUI {
         var lightPos = Lights.addFolder('Light Position');
         lightPos.add(LightFolder, 'x_Position').min(-100).max(100).step(0.25);
         lightPos.add(LightFolder, 'y_Position').min(-100).max(100).step(0.25);
-        lightPos.add(LightFolder, 'z_Position').min(-100).max(100).step(0.25);
+        lightPos.add(LightFolder, 'z_Position').min(1).max(100).step(0.25);
 
         var lightColor = Lights.addFolder('Light Color');
         lightColor.addColor(LightFolder, 'light_diffuse');
