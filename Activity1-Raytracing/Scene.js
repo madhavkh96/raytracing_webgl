@@ -1,3 +1,5 @@
+//import { color } from "../lib/build/dat.gui.module";
+
 var g_t0_MAX = 1.23E16; // The farthest possible hit point distance
 
 
@@ -5,7 +7,7 @@ class SurfaceDetails{
     constructor() {
         this.ambi_I = vec4.fromValues(0.1, 0.1, 0.55, 1);
         this.diff_I = vec4.fromValues(0.0, 0.0, 0.55, 1);
-        this.spec_I = vec4.fromValues(0.6, 0.6, 0.6, 1);
+        this.spec_I = vec4.fromValues(0.0, 0.0, 0.0, 1);
         this.emiss_I = vec4.fromValues(0, 0, 0, 1);
         this.shine = 100;
     }
@@ -114,7 +116,7 @@ class Scene {
         var iNow = -1;
 
         switch (num) {
-            case 0:
+            case 1:
                 //Ground Plane
                 this.item.push(new Geometery(RT_GNDPLANE));
                 iNow = this.item.length - 1;
@@ -139,7 +141,7 @@ class Scene {
                 this.item[iNow].setEmissive(0.0, 0.0, 0.0);
                 this.item[iNow].setAmbient(0.05, 0.05, 0.05);
                 this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
-                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setSpecular(1.0, 1.0, 1.0);
                 this.item[iNow].setShine(100.0);
 
                 //Add Sphere
@@ -157,42 +159,58 @@ class Scene {
                 this.item[iNow].setShine(100.0);
 
                 break;
-            case 1:
+            case 0:
                 this.item.push(new Geometery(RT_GNDPLANE));
                 iNow = this.item.length - 1;
 
 
                 this.item[iNow].setEmissive(0.0, 0.0, 0.0);
-                this.item[iNow].setAmbient(0.4, 0.4, 0.1);
-                this.item[iNow].setDiffuse(0.6, 0.6, 0.0);
-                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setAmbient(0.4, 0.4, 0.0);
+                this.item[iNow].setDiffuse(0.8, 0.8, 0.0);
+                this.item[iNow].setSpecular(0.02, 0.02, 0.02);
                 this.item[iNow].setShine(100.0);
 
                 this.item.push(new Geometery(RT_SPHERE));
                 iNow = this.item.length - 1;
 
                 this.item[iNow].setIdentity();
-                this.item[iNow].rayTranslate(0, 0, 6.0);
+                this.item[iNow].rayTranslate(0, 0, 1.0);
 
                 //Add the material 
                 this.item[iNow].setEmissive(0.0, 0.0, 0.0);
-                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
-                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
-                this.item[iNow].setSpecular(0.6, 0.6, 0.6);
+                this.item[iNow].setAmbient(0.05, 0.45, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.9, 0.0);
+                this.item[iNow].setSpecular(0.5, 0.5, 0.5);
                 this.item[iNow].setShine(60.0);
 
                 this.item.push(new Geometery(RT_SPHERE));
                 iNow = this.item.length - 1;
 
                 this.item[iNow].setIdentity();
-                this.item[iNow].rayTranslate(0, -1.0, 3.0);
+                this.item[iNow].rayTranslate(-1.0, 5.0, 5.0);
+                this.item[iNow].rayScale(2.0, 2.0, 2.0);
 
                 //Add the material 
                 this.item[iNow].setEmissive(0.0, 0.0, 0.0);
-                this.item[iNow].setAmbient(0.05, 0.05, 0.05);
-                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
-                this.item[iNow].setSpecular(0.6, 0.6, 0.6);
+                this.item[iNow].setAmbient(0.05, 0.1, 0.4);
+                this.item[iNow].setDiffuse(0.0, 0.2, 0.8);
+                this.item[iNow].setSpecular(0.3, 0.3, 0.3);
                 this.item[iNow].setShine(60.0);
+
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(-3.0, 0.0, 3.0);
+                this.item[iNow].rayScale(1.0, 0.5, 3.0);
+
+                //Add the material 
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.3, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.9, 0.0, 0.0);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(60.0);
+
                 break;
             case 2:
                 this.item.push(new Geometery(RT_GNDPLANE));
@@ -244,7 +262,6 @@ class Scene {
     }
 
     makeRayTracedImage() {
-
         this.rayCamera.rayPerspective(gui.camFovy, gui.camAspect, gui.camNear);
         this.rayCamera.rayLookAt(gui.camEyePt, gui.camAimPt, gui.camUpVec);
 
@@ -276,7 +293,7 @@ class Scene {
                                 y_factor = 0.5;
                             } else {
                                 x_factor = 0.5 * Math.random();
-                                y_factor = 0.5;
+                                y_factor = 0.5 * Math.random();
                             }
                             break;
                         case 2:
@@ -285,7 +302,7 @@ class Scene {
                                 y_factor = 0.33;
                             } else {
                                 x_factor = 0.33 * Math.random();
-                                y_factor = 0.33;
+                                y_factor = 0.33 * Math.random();
                             }
                             break;
                         case 3:
@@ -294,7 +311,7 @@ class Scene {
                                 y_factor = 0.25;
                             } else {
                                 x_factor = 0.25 * Math.random();
-                                y_factor = 0.25;
+                                y_factor = 0.25 * Math.random();
                             }
                             break;
                         case 4:
@@ -303,7 +320,7 @@ class Scene {
                                 y_factor = 0.20;
                             } else {
                                 x_factor = 0.20 * Math.random();
-                                y_factor = 0.20;
+                                y_factor = 0.20 * Math.random();
                             }
                             break;
                     }
@@ -328,28 +345,11 @@ class Scene {
                     //    vec4.copy(colr, this.skyColor);
                     //}
 
-                    this.worldLight.phong(colr, myHit, this.eyeRay, this.item);
-
-                    //this.worldLight.findShade(colr, myHit, this.item, cont, this.eyeRay);
-
-                    //if (myHit.hitGeom.shapeType == RT_SPHERE) {
-                    //    colr[0] = 0.4;
-                    //    colr[1] = 0.0;
-                    //    colr[2] = 0.0;
-                    //}
-
+                    this.phong(colr, myHit, myHit, this.item, g_recusrionsNum, this.worldLight, false);
 
                     final_colr[0] += colr[0];
                     final_colr[1] += colr[1];
                     final_colr[2] += colr[2];
-
-                    if (i == this.imgBuf.xSize / 2 && j == this.imgBuf.ySize / 4) {
-                        console.log(myHit);
-                        console.log(myHit.t0);
-                        console.log(colr);
-                        console.log(myHit.hitList);
-                        console.log(this.worldLight.hitPointDir);
-                    }
 
                     colr = vec4.fromValues(0, 0, 0, 1);
                 }
@@ -360,6 +360,12 @@ class Scene {
                 final_colr[0] /= g_AAcode;
                 final_colr[1] /= g_AAcode;
                 final_colr[2] /= g_AAcode;
+
+                //if (i == g_myScene.imgBuf.xSize / 2 && j == g_myScene.imgBuf.ySize / 2) {
+                //    console.log(myHit.surfNorm);
+                //    reflection = vec4.create();
+                //    this.reflect(reflection, myHit.surfNorm, )
+                //}
 
 
                 var idx = (j * this.imgBuf.xSize + i) * this.imgBuf.pixSize;	// Array index at pixel (i,j) 
@@ -374,5 +380,133 @@ class Scene {
                 break;
         }
         this.imgBuf.float2int();
+    }
+
+    phong(out, originalHit, rayHit, objects, recursion, light, isReflection) {
+
+        if (recursion == 0)
+            return;
+
+        var shadowFeeler = new Ray();
+        var shadowHit = new Hit();
+        var viewVector = vec4.create();
+        var reflectedRay = new Ray();
+        var reflectedHit = new Hit();
+        var color_percent = vec4.create();
+
+        if (!isReflection) {
+            color_percent = vec4.fromValues(1.0, 1.0, 1.0, 1.0);
+        } else {
+            vec4.copy(color_percent, originalHit.surfaceProperties.spec_I);
+        }
+
+        vec4.copy(viewVector, rayHit.viewN);
+
+        //Calculating and adding emissive and ambient colors
+        var emissive = vec4.clone(rayHit.surfaceProperties.emiss_I);
+
+        var ambient = vec4.create();
+
+        vec4.multiply(ambient, rayHit.surfaceProperties.ambi_I, light.lightAmbi);
+
+        out[0] = (out[0] + (emissive[0] + ambient[0]) * color_percent[0]) * light.lightIntensity;
+        out[1] = (out[1] + (emissive[1] + ambient[1]) * color_percent[1]) * light.lightIntensity;
+        out[2] = (out[2] + (emissive[2] + ambient[2]) * color_percent[2]) * light.lightIntensity;
+        out[3] = 1.0;
+
+        //Setting up the shadow feeler ray
+        shadowFeeler.origin = vec4.clone(rayHit.hitPt);
+
+        shadowFeeler.origin[0] += viewVector[0] * RAY_EPSILON;
+        shadowFeeler.origin[1] += viewVector[1] * RAY_EPSILON;
+        shadowFeeler.origin[2] += viewVector[2] * RAY_EPSILON;
+
+        reflectedRay.origin = vec4.clone(shadowFeeler.origin);
+
+        vec4.subtract(shadowFeeler.dir, light.position, shadowFeeler.origin);
+
+        shadowHit.init();
+
+        reflectedHit.init();
+
+        for (var i = 0; i < objects.length; i++) {
+            objects[i].traceShape(shadowFeeler, shadowHit, true);
+        }
+
+        if (/*isReflection && */!shadowHit.shadow) {
+            //Calculating Attenuation;
+            var dist = this.distanceToLight(rayHit.hitPt, light);
+
+            var att = 1 / dist;
+
+            var diffuse = vec4.create();
+            vec4.multiply(diffuse, rayHit.surfaceProperties.diff_I, light.lightDiff);
+            vec4.scale(diffuse, diffuse, att * Math.max(0, vec4.dot(rayHit.surfNorm, shadowFeeler.dir)));
+
+            var lightReflection = vec4.create();
+
+            //Compute R.V
+            var specular = vec4.create();
+            this.reflect(lightReflection, rayHit.surfNorm, shadowFeeler.dir);
+            var RdotV = 0;
+            vec4.dot(RdotV, lightReflection, viewVector);
+            vec4.multiply(specular, rayHit.surfaceProperties.spec_I, light.lightSpec);
+            vec4.scale(specular, specular, att * Math.pow(RdotV, rayHit.surfaceProperties.shine));
+
+            this.reflect(reflectedRay.dir, rayHit.surfNorm, viewVector);
+
+            out[0] = (out[0] + (diffuse[0] + specular[0]) * color_percent[0]) * light.lightIntensity;
+            out[1] = (out[1] + (diffuse[1] + specular[1]) * color_percent[1]) * light.lightIntensity;
+            out[2] = (out[2] + (diffuse[2] + specular[2]) * color_percent[2]) * light.lightIntensity;
+        } else {
+            this.reflect(reflectedRay.dir, rayHit.surfNorm, viewVector);
+        }
+
+        recursion--;
+
+
+        for (var i = 0; i < objects.length; i++) {
+            objects[i].traceShape(reflectedRay, reflectedHit, false);
+        }
+
+        this.phong(out, originalHit, reflectedHit, objects, recursion, light, true);
+    }
+
+    //Helper Functions
+    reflect(out, normal, lightVector) {
+
+        //Make Lightvector Unit Length
+        vec4.normalize(lightVector, lightVector);
+
+        //Find C
+        var C = vec4.create();
+        var NdotL = vec4.dot(lightVector, normal);
+
+        vec4.scale(C, normal, NdotL);
+
+        //Find R
+        var R = vec4.create();
+        var C_2 = vec4.create();
+
+        vec4.scale(C_2, C, 2);
+        vec4.subtract(R, C_2, lightVector);
+
+
+        out[0] = R[0];
+        out[1] = R[1];
+        out[2] = R[2];
+        out[3] = 0.0;
+
+        return out;
+    }
+
+    distanceToLight(hitPosn, light) {
+        var distance = 0;
+
+        distance = Math.sqrt(Math.pow(hitPosn[0] - light.position[0], 2) +
+            Math.pow(hitPosn[1] - light.position[1], 2) +
+            Math.pow(hitPosn[2] - light.position[2], 2));
+
+        return distance;
     }
 }

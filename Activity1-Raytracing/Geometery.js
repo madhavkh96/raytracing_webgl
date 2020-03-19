@@ -12,7 +12,8 @@ const RT_BLOBBY = 6;
 class Geometery {
     constructor(selectedShape) {
 
-        if (selectedShape == undefined) selectedShape = RT_GNDPLANE;
+        if (selectedShape === undefined)
+            selectedShape = RT_GNDPLANE;
         this.shapeType = selectedShape;
 
         //this.traceShape = function (inR, hit, shadow) { this.traceShape(inR, hit, shadow) }
@@ -41,8 +42,13 @@ class Geometery {
         a[12] = -x;
         a[13] = -y;
         a[14] = -z;
+
         mat4.multiply(this.worldRay2model, a, this.worldRay2model);
-        mat4.transpose(this.normal2World, this.worldRay2model);
+
+        this.worldRay2model[3] = 0.0;
+        this.worldRay2model[7] = 0.0;
+        this.worldRay2model[11] = 0.0;
+        this.worldRay2model[15] = 1.0;
     }
 
     setDiffuse(r, g, b) {
@@ -168,7 +174,9 @@ class Geometery {
 
                 vec4.normalize(hit.viewN, hit.viewN);
 
-                vec4.transformMat4(hit.surfNorm, vec4.fromValues(0, 0, 1, 0), this.normal2World);
+                //vec4.transformMat4(hit.surfNorm, vec4.fromValues(0, 0, 1, 0), this.normal2World);
+
+                hit.surfNorm = vec4.fromValues(0, 0, 1, 0);
 
                 hit.surfaceProperties = this.surfaceProperties;
 
@@ -245,7 +253,13 @@ class Geometery {
 
                 vec4.normalize(hit.viewN, hit.viewN);
 
-                vec4.transformMat4(hit.surfNorm, vec4.fromValues(0, 0, 1, 0), this.normal2World);
+                vec4.transformMat4(hit.surfNorm, hit.modelHitPt, this.normal2World);
+
+                hit.surfNorm[3] = 0.0;
+                //hit.surfNorm[0] = hit.surfNorm[1];
+                //hit.surfNorm[1] = hit.surfNorm[2];
+                //hit.surfNorm[2] = hit.surfNorm[3];
+                //hit.surfNorm[3] = 1.0;
 
                 vec4.normalize(hit.surfNorm, hit.surfNorm);
 
@@ -279,7 +293,6 @@ class Geometery {
                 var L2 = vec3.dot(r2s, r2s);
 
                 if (L2 <= 1.0) {
-                    console.log("CGeom.traceSphere() ERROR! rayT origin at or inside sphere!\n\n", );
                     return;
                 }
 
@@ -325,9 +338,11 @@ class Geometery {
 
                 vec4.normalize(hit.viewN, hit.viewN);
 
-                vec4.subtract(hit.surfNorm, hit.modelHitPt, vec4.fromValues(0, 0, 0, 1));
+                hit.modelHitPt[3] = 1.0;
 
-                //vec4.transformMat4(hit.surfNorm, hit.modelHitPt, this.normal2World);
+                vec4.transformMat4(hit.surfNorm, hit.modelHitPt, this.normal2World);
+
+                hit.surfNorm[3] = 0.0;
 
                 vec4.normalize(hit.surfNorm, hit.surfNorm);
 
