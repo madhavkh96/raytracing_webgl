@@ -7,7 +7,7 @@ class SurfaceDetails{
     constructor() {
         this.ambi_I = vec4.fromValues(0.1, 0.1, 0.55, 1);
         this.diff_I = vec4.fromValues(0.0, 0.0, 0.55, 1);
-        this.spec_I = vec4.fromValues(0.6, 0.6, 0.6, 1);
+        this.spec_I = vec4.fromValues(0.0, 0.0, 0.0, 1);
         this.emiss_I = vec4.fromValues(0, 0, 0, 1);
         this.shine = 100;
     }
@@ -178,22 +178,23 @@ class Scene {
 
                 //Add the material 
                 this.item[iNow].setEmissive(0.0, 0.0, 0.0);
-                this.item[iNow].setAmbient(0.05, 0.3, 0.05);
-                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
-                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setAmbient(0.05, 0.45, 0.05);
+                this.item[iNow].setDiffuse(0.0, 0.9, 0.0);
+                this.item[iNow].setSpecular(0.5, 0.5, 0.5);
                 this.item[iNow].setShine(60.0);
 
                 this.item.push(new Geometery(RT_SPHERE));
                 iNow = this.item.length - 1;
 
                 this.item[iNow].setIdentity();
-                this.item[iNow].rayTranslate(-1.0, 2.5, 1.0);
+                this.item[iNow].rayTranslate(-1.0, 5.0, 5.0);
+                this.item[iNow].rayScale(2.0, 2.0, 2.0);
 
                 //Add the material 
                 this.item[iNow].setEmissive(0.0, 0.0, 0.0);
-                this.item[iNow].setAmbient(0.05, 0.3, 0.05);
-                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
-                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setAmbient(0.05, 0.1, 0.4);
+                this.item[iNow].setDiffuse(0.0, 0.2, 0.8);
+                this.item[iNow].setSpecular(0.3, 0.3, 0.3);
                 this.item[iNow].setShine(60.0);
 
                 this.item.push(new Geometery(RT_SPHERE));
@@ -205,8 +206,8 @@ class Scene {
 
                 //Add the material 
                 this.item[iNow].setEmissive(0.0, 0.0, 0.0);
-                this.item[iNow].setAmbient(0.05, 0.3, 0.05);
-                this.item[iNow].setDiffuse(0.0, 0.6, 0.0);
+                this.item[iNow].setAmbient(0.3, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.9, 0.0, 0.0);
                 this.item[iNow].setSpecular(0.2, 0.2, 0.2);
                 this.item[iNow].setShine(60.0);
 
@@ -293,7 +294,7 @@ class Scene {
                                 y_factor = 0.5;
                             } else {
                                 x_factor = 0.5 * Math.random();
-                                y_factor = 0.5;
+                                y_factor = 0.5 * Math.random();
                             }
                             break;
                         case 2:
@@ -302,7 +303,7 @@ class Scene {
                                 y_factor = 0.33;
                             } else {
                                 x_factor = 0.33 * Math.random();
-                                y_factor = 0.33;
+                                y_factor = 0.33 * Math.random();
                             }
                             break;
                         case 3:
@@ -311,7 +312,7 @@ class Scene {
                                 y_factor = 0.25;
                             } else {
                                 x_factor = 0.25 * Math.random();
-                                y_factor = 0.25;
+                                y_factor = 0.25 * Math.random();
                             }
                             break;
                         case 4:
@@ -320,7 +321,7 @@ class Scene {
                                 y_factor = 0.20;
                             } else {
                                 x_factor = 0.20 * Math.random();
-                                y_factor = 0.20;
+                                y_factor = 0.20 * Math.random();
                             }
                             break;
                     }
@@ -345,7 +346,7 @@ class Scene {
                     //    vec4.copy(colr, this.skyColor);
                     //}
 
-                    this.phong(colr, myHit, this.item, 2, this.worldLight, 2);
+                    this.phong(colr, myHit, myHit, this.item, g_recusrionsNum, this.worldLight, false);
 
                     final_colr[0] += colr[0];
                     final_colr[1] += colr[1];
@@ -382,7 +383,7 @@ class Scene {
         this.imgBuf.float2int();
     }
 
-    phong(out, rayHit, objects, recursion, light, initial_recur) {
+    phong(out, originalHit, rayHit, objects, recursion, light, isReflection) {
 
         if (recursion == 0)
             return;
@@ -394,10 +395,10 @@ class Scene {
         var reflectedHit = new Hit();
         var color_percent = vec4.create();
 
-        if (recursion == initial_recur) {
+        if (!isReflection) {
             color_percent = vec4.fromValues(1.0, 1.0, 1.0, 1.0);
         } else {
-        vec4.copy(color_percent, rayHit.surfaceProperties.spec_I);
+            vec4.copy(color_percent, originalHit.surfaceProperties.spec_I);
         }
 
         vec4.copy(viewVector, rayHit.viewN);
@@ -409,9 +410,9 @@ class Scene {
 
         vec4.multiply(ambient, rayHit.surfaceProperties.ambi_I, light.lightAmbi);
 
-        out[0] += (emissive[0] + ambient[0]) * color_percent[0];
-        out[1] += (emissive[1] + ambient[1]) * color_percent[1];
-        out[2] += (emissive[2] + ambient[2]) * color_percent[2];
+        out[0] = (out[0] + (emissive[0] + ambient[0]) * color_percent[0]) * light.lightIntensity;
+        out[1] = (out[1] + (emissive[1] + ambient[1]) * color_percent[1]) * light.lightIntensity;
+        out[2] = (out[2] + (emissive[2] + ambient[2]) * color_percent[2]) * light.lightIntensity;
         out[3] = 1.0;
 
         //Setting up the shadow feeler ray
@@ -420,7 +421,6 @@ class Scene {
         shadowFeeler.origin[0] += viewVector[0] * RAY_EPSILON;
         shadowFeeler.origin[1] += viewVector[1] * RAY_EPSILON;
         shadowFeeler.origin[2] += viewVector[2] * RAY_EPSILON;
-
 
         reflectedRay.origin = vec4.clone(shadowFeeler.origin);
 
@@ -434,12 +434,7 @@ class Scene {
             objects[i].traceShape(shadowFeeler, shadowHit, true);
         }
 
-
-
-        if (shadowHit.shadow && initial_recur == recursion) {
-            this.reflect(reflectedRay.dir, rayHit.surfNorm, rayHit.viewN);
-
-        } else {
+        if (/*isReflection && */!shadowHit.shadow) {
             //Calculating Attenuation;
             var dist = this.distanceToLight(rayHit.hitPt, light);
 
@@ -449,8 +444,8 @@ class Scene {
             vec4.multiply(diffuse, rayHit.surfaceProperties.diff_I, light.lightDiff);
             vec4.scale(diffuse, diffuse, att * Math.max(0, vec4.dot(rayHit.surfNorm, shadowFeeler.dir)));
 
-
             var lightReflection = vec4.create();
+
             //Compute R.V
             var specular = vec4.create();
             this.reflect(lightReflection, rayHit.surfNorm, shadowFeeler.dir);
@@ -459,11 +454,13 @@ class Scene {
             vec4.multiply(specular, rayHit.surfaceProperties.spec_I, light.lightSpec);
             vec4.scale(specular, specular, att * Math.pow(RdotV, rayHit.surfaceProperties.shine));
 
-            this.reflect(reflectedRay.dir, rayHit.surfNorm, rayHit.viewN);
+            this.reflect(reflectedRay.dir, rayHit.surfNorm, viewVector);
 
-            out[0] += (diffuse[0] + specular[0]) * color_percent[0];
-            out[1] += (diffuse[1] + specular[1])* color_percent[1];
-            out[2] += (diffuse[2] + specular[2])* color_percent[2];
+            out[0] = (out[0] + (diffuse[0] + specular[0]) * color_percent[0]) * light.lightIntensity;
+            out[1] = (out[1] + (diffuse[1] + specular[1]) * color_percent[1]) * light.lightIntensity;
+            out[2] = (out[2] + (diffuse[2] + specular[2]) * color_percent[2]) * light.lightIntensity;
+        } else {
+            this.reflect(reflectedRay.dir, rayHit.surfNorm, viewVector);
         }
 
         recursion--;
@@ -473,7 +470,7 @@ class Scene {
             objects[i].traceShape(reflectedRay, reflectedHit, false);
         }
 
-        this.phong(out, reflectedHit, objects, recursion, light, initial_recur);
+        this.phong(out, originalHit, reflectedHit, objects, recursion, light, true);
     }
 
     //Helper Functions
@@ -493,7 +490,6 @@ class Scene {
         var C_2 = vec4.create();
 
         vec4.scale(C_2, C, 2);
-
         vec4.subtract(R, C_2, lightVector);
 
 

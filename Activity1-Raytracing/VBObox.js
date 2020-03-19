@@ -559,7 +559,8 @@ class WebGLView {
                 var temp = mat4.create();
                 mat4.copy(temp, this.mvpMat);
 
-                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(-1.0, 2.5, 1.0));
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(-1.0, 5.0, 5.0));
+                mat4.scale(this.mvpMat, this.mvpMat, vec3.fromValues(2.0, 2.0, 2.0));
 
                 gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
                 mat4.copy(this.mvpMat, temp);
@@ -571,7 +572,9 @@ class WebGLView {
                 var temp = mat4.create();
                 mat4.copy(temp, this.mvpMat);
 
-                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(-3.0, 0.0, 1.0));
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(-3.0, 0.0, 3.0));
+                mat4.scale(this.mvpMat, this.mvpMat, vec3.fromValues(2.0, 0.5, 3.0));
+
 
                 gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
                 mat4.copy(this.mvpMat, temp);

@@ -13,26 +13,84 @@ class GUI {
         this.xMdragTot = 0.0;
         this.yMdragTot = 0.0;
 
-     
 
-        var ResGUI = function () {
+        this.RayTracerGUI = function () {
+            this.anti_aliasing = 1;
+            this.isJittered = false;
+            this.recursions = 1;
+
+            this.setValues = function () {
+                console.log(g_AAcode);
+                g_AAcode = this.anti_aliasing;
+                console.log(g_AAcode);
+                g_recusrionsNum = this.recursions;
+                if (this.isJittered)
+                    g_isJitter = 1;
+                else
+                    g_isJitter = 0;
+
+                this.xMpos = this.xCVV;                                 
+                this.yMpos = this.yCVV;
+                //console.log(g_AAcode);
+                //g_myScene.makeRayTracedImage();
+                //raytracedView.switchToMe();
+                //raytracedView.reload();
+                //drawAll();
+            }
+        }
+
+        this.LightGUI = function () {
+            this.lightIntensity = 1;
+            this.light_diffuse = [255, 255, 255];
+            this.light_ambient = [255, 255, 255];
+            this.light_specular = [255, 255, 255];
+            this.x_Position = 0;
+            this.y_Position = 0;
+            this.z_Position = 20;
+
+            this.reloadLight = function () {
+                g_Light_intensity = this.lightIntensity;
+                //Diffuse
+                this.light_diffuse[0] /= 255;
+                this.light_diffuse[1] /= 255;
+                this.light_diffuse[2] /= 255;
+
+                //Ambient
+                this.light_ambient[0] /= 255;
+                this.light_ambient[1] /= 255;
+                this.light_ambient[2] /= 255;
+
+                //Specular
+                this.light_specular[0] /= 255;
+                this.light_specular[1] /= 255;
+                this.light_specular[2] /= 255;
+
+
+                //Update Values
+                g_myScene.worldLight.ChangeIntensity(g_Light_intensity);
+                g_myScene.worldLight.ChangeDiffuse(this.light_diffuse);
+                g_myScene.worldLight.ChangeSpecular(this.light_specular);
+                g_myScene.worldLight.ChangeAmbient(this.light_ambient);
+                g_myScene.worldLight.UpdatePosition(this.x_Position, this.y_Position, this.z_Position);
+            }
+        }
+
+
+        this.ResGUI = function () {
 
         }
 
-        var ReflectionGUI = function () {
-
-        }
     }
 
     init() {
-        var events = this;    // (local) reference to the current GUIbox object;
+         var events = this;    // (local) reference to the current GUIbox object;
         // used in anonymous functions to restore simple
         // expected behavior of 'this' inside GUIbox functions. 
         window.addEventListener("mousedown",
             function (mev) { return events.mouseDown(mev); });
-        // (After each 'mousedown' event, browser calls this anonymous method events
-        //    does nothing but return the 'events' object's mouseDown() method.
-        //    WHY? to ensure proper operation of 'this' within the mouseDown() fcn.)
+        // (after each 'mousedown' event, browser calls this anonymous method events
+        //    does nothing but return the 'events' object's mousedown() method.
+        //    why? to ensure proper operation of 'this' within the mousedown() fcn.)
         window.addEventListener("mousemove",
             function (mev) { return events.mouseMove(mev); });
         window.addEventListener("mouseup",
@@ -60,7 +118,7 @@ class GUI {
             'Mouse Drag totals (CVV coords):\t' +
             this.xMdragTot.toFixed(5) + ', \t' + this.yMdragTot.toFixed(5);
 
-        window.onload = showDatGUI();
+        window.onload = this.showDatGUI();
 
         // Camera-Navigation:----------------------------------
         // Initialize our camera aiming parameters using yaw-pitch sphere method.
@@ -189,7 +247,7 @@ class GUI {
                 console.log("TRACE a new image!\n");
                 document.getElementById('KeyPressResult').innerHTML =
                     'GUIbox.keyPress() found t/T key. TRACE!';
-
+                console.log('Recursions : ', g_recusrionsNum, 'Anti-aliased:', g_AAcode);
                 g_myScene.makeRayTracedImage(); // run the ray-tracer		
                 raytracedView.switchToMe(); // be sure OUR VBO & shaders are in use, then
                 raytracedView.reload();     // re-transfer VBO contents and texture-map contents
@@ -235,6 +293,10 @@ class GUI {
                 document.getElementById('KeyPressResult').innerHTML =
                     'GUIbox.keyPress() found w/W key. Move FWD!';
                 this.camFwd();
+                break;
+            case 'L':
+            case 'l':
+                console.log(g_Light_intensity);
                 break;
             default:
                 console.log('GUIbox.keyPress(): Ignored key: ' + myChar);
@@ -294,48 +356,33 @@ class GUI {
     }
 
     
+    showDatGUI = function () {
 
-    
-   
+        var gui = new dat.GUI();
+        var RTFolder = new this.RayTracerGUI();
+        var LightFolder = new this.LightGUI();
 
-}
+        var RT = gui.addFolder('Ray Tracer Settings');
+        RT.add(RTFolder, 'anti_aliasing', { One_X_One: 1, Two_X_Two: 2, Three_X_Three: 3, Four_X_Four: 4 });
+        RT.add(RTFolder, 'isJittered');
+        RT.add(RTFolder, 'recursions', { One: 1, Two: 2, Three: 3, Four: 4 });
+        RT.add(RTFolder, 'setValues');
 
-var AAGUI = function () {
-    this.anti_aliasing = g_AAcode;
+        var Lights = gui.addFolder('World Light Settings');
+        var lightPos = Lights.addFolder('Light Position');
+        lightPos.add(LightFolder, 'x_Position').min(-100).max(100).step(0.25);
+        lightPos.add(LightFolder, 'y_Position').min(-100).max(100).step(0.25);
+        lightPos.add(LightFolder, 'z_Position').min(-100).max(100).step(0.25);
 
-    this.reload = function () {
+        var lightColor = Lights.addFolder('Light Color');
+        lightColor.addColor(LightFolder, 'light_diffuse');
+        lightColor.addColor(LightFolder, 'light_ambient');
+        lightColor.addColor(LightFolder, 'light_specular');
 
-        g_AAcode = this.anti_aliasing;
-        console.log(g_AAcode);
-        g_myScene.makeRayTracedImage();
-        raytracedView.switchToMe();
-        raytracedView.reload();
-        drawAll();
+        lightColor.open();
+        lightPos.open();
+
+        Lights.add(LightFolder, 'lightIntensity', 0, 5);
+        Lights.add(LightFolder, 'reloadLight');
     }
-}
-
-var ReflectionGUI = function () {
-    this.recursions = 1;
-
-    this.reload = function () {
-        g_recusrionsNum = this.recursions;
-    }
-}
-
-
-showDatGUI = function () {
-
-    var AAFolder = new AAGUI();
-    var gui = new dat.GUI();
-    //var ResFolder = new ResGUI();
-
-    var ReflectFolder = new ReflectionGUI();
-
-    var AA = gui.addFolder('Anti-Aliasing');
-    AA.add(AAFolder, 'anti_aliasing', { One_X_One: 1, Two_X_Two: 2, Three_X_Three: 3, Four_X_Four: 4 });
-    AA.add(AAFolder, 'reload');
-
-    var Reflections = gui.addFolder('Recursions');
-    Reflections.add(ReflectFolder, 'recursions', { One: 1, Two: 2, Three: 3, Four: 4 });
-    Reflections.add(ReflectFolder, 'reload');
 }

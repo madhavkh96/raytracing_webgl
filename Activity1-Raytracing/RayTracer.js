@@ -20,9 +20,14 @@ var g_AAcode = 1;  // -1, -2, -3, -4 == No Jitter Super Sampled
 
 var g_isJitter = 0;
 
-var g_recusrionsNum = 0;
+var g_recusrionsNum = 1;
 
 var G_AA_MAX = 4;
+
+//Light Controls
+
+var g_Light_intensity = 1;
+
 
 function main() {
 

@@ -340,8 +340,6 @@ class Geometery {
 
                 hit.modelHitPt[3] = 1.0;
 
-                //vec4.subtract(hit.surfNorm, hit.modelHitPt, vec4.fromValues(0, 0, -1, 1));
-
                 vec4.transformMat4(hit.surfNorm, hit.modelHitPt, this.normal2World);
 
                 hit.surfNorm[3] = 0.0;
