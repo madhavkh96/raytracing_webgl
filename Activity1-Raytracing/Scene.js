@@ -91,9 +91,11 @@ class Scene {
         this.eyeRay = new Ray();
         this.rayCamera = new Camera();
         this.worldLight = new Light();
-        this.headLight = new Light();
+        this.headLight = new Light(0, -5, 20);
 
         this.item = [];
+
+        this.lights = [];
 
     }
 
@@ -254,6 +256,21 @@ class Scene {
                 this.item[iNow].setSpecular(0.2, 0.2, 0.2);
                 this.item[iNow].setShine(100.0);
 
+                //Adding the Sphere
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, -0.5, 3.5);
+                this.item[iNow].rayScale(0.4, 0.4, 0.4);
+
+                //Add the Material
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.3, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.9, 0.0, 0.0);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(60.0);
+
                 break;
             default:
                 this.init(0);
@@ -266,6 +283,15 @@ class Scene {
         this.rayCamera.rayLookAt(gui.camEyePt, gui.camAimPt, gui.camUpVec);
 
         this.setImgBuf(this.imgBuf);
+
+        this.lights = [];
+
+        this.lights.push(this.worldLight);
+
+        if (g_headLightOn) {
+            this.lights.push(this.headLight);
+        }
+        console.log(this.lights);
 
         var colr = vec4.create();
         var idx = 0;
@@ -281,6 +307,8 @@ class Scene {
 
         var x_factor = 0;
         var y_factor = 0;
+
+        console.log('g_AACode', g_AAcode);
 
         for (j = 0; j < this.imgBuf.ySize; j++) {
             for (i = 0; i < this.imgBuf.xSize; i++) {
@@ -345,7 +373,7 @@ class Scene {
                     //    vec4.copy(colr, this.skyColor);
                     //}
 
-                    this.phong(colr, myHit, myHit, this.item, g_recusrionsNum, this.worldLight, false);
+                    this.phong(colr, myHit, myHit, this.item, g_recusrionsNum, this.lights, false);
 
                     final_colr[0] += colr[0];
                     final_colr[1] += colr[1];
@@ -382,94 +410,100 @@ class Scene {
         this.imgBuf.float2int();
     }
 
-    phong(out, originalHit, rayHit, objects, recursion, light, isReflection) {
+    phong(out, originalHit, rayHit, objects, recursion, lights, isReflection) {
 
         if (recursion == 0)
             return;
 
-        var shadowFeeler = new Ray();
-        var shadowHit = new Hit();
+
         var viewVector = vec4.create();
         var reflectedRay = new Ray();
         var reflectedHit = new Hit();
         var color_percent = vec4.create();
 
+        vec4.copy(viewVector, rayHit.viewN);
+
+
         if (!isReflection) {
-            color_percent = vec4.fromValues(1.0, 1.0, 1.0, 1.0);
+            color_percent = vec4.fromValues(0.6, 0.6, 0.6, 1.0);
         } else {
             vec4.copy(color_percent, originalHit.surfaceProperties.spec_I);
         }
 
-        vec4.copy(viewVector, rayHit.viewN);
 
-        //Calculating and adding emissive and ambient colors
-        var emissive = vec4.clone(rayHit.surfaceProperties.emiss_I);
+        for (var j = 0; j < lights.length; j++) {
 
-        var ambient = vec4.create();
+            var shadowFeeler = new Ray();
+            var shadowHit = new Hit();
+            //Calculating and adding emissive and ambient colors
+            var emissive = vec4.clone(rayHit.surfaceProperties.emiss_I);
 
-        vec4.multiply(ambient, rayHit.surfaceProperties.ambi_I, light.lightAmbi);
+            var ambient = vec4.create();
 
-        out[0] = (out[0] + (emissive[0] + ambient[0]) * color_percent[0]) * light.lightIntensity;
-        out[1] = (out[1] + (emissive[1] + ambient[1]) * color_percent[1]) * light.lightIntensity;
-        out[2] = (out[2] + (emissive[2] + ambient[2]) * color_percent[2]) * light.lightIntensity;
-        out[3] = 1.0;
+            vec4.multiply(ambient, rayHit.surfaceProperties.ambi_I, lights[j].lightAmbi);
 
-        //Setting up the shadow feeler ray
-        shadowFeeler.origin = vec4.clone(rayHit.hitPt);
+            out[0] = (out[0] + (emissive[0] + ambient[0]) * color_percent[0]) * lights[j].lightIntensity;
+            out[1] = (out[1] + (emissive[1] + ambient[1]) * color_percent[1]) * lights[j].lightIntensity;
+            out[2] = (out[2] + (emissive[2] + ambient[2]) * color_percent[2]) * lights[j].lightIntensity;
+            out[3] = 1.0;
 
-        shadowFeeler.origin[0] += viewVector[0] * RAY_EPSILON;
-        shadowFeeler.origin[1] += viewVector[1] * RAY_EPSILON;
-        shadowFeeler.origin[2] += viewVector[2] * RAY_EPSILON;
+            //Setting up the shadow feeler ray
+            shadowFeeler.origin = vec4.clone(rayHit.hitPt);
 
-        reflectedRay.origin = vec4.clone(shadowFeeler.origin);
+            shadowFeeler.origin[0] += viewVector[0] * RAY_EPSILON;
+            shadowFeeler.origin[1] += viewVector[1] * RAY_EPSILON;
+            shadowFeeler.origin[2] += viewVector[2] * RAY_EPSILON;
 
-        vec4.subtract(shadowFeeler.dir, light.position, shadowFeeler.origin);
+            reflectedRay.origin = vec4.clone(shadowFeeler.origin);
 
-        shadowHit.init();
+            vec4.subtract(shadowFeeler.dir, lights[j].position, shadowFeeler.origin);
 
-        reflectedHit.init();
+            shadowHit.init();
 
-        for (var i = 0; i < objects.length; i++) {
-            objects[i].traceShape(shadowFeeler, shadowHit, true);
+            reflectedHit.init();
+
+            for (var i = 0; i < objects.length; i++) {
+                objects[i].traceShape(shadowFeeler, shadowHit, true);
+            }
+
+            if (!shadowHit.shadow) {
+                //Calculating Attenuation;
+                var dist = this.distanceToLight(rayHit.hitPt, lights[j]);
+
+                var att = 1 / dist;
+
+                var diffuse = vec4.create();
+                vec4.multiply(diffuse, rayHit.surfaceProperties.diff_I, lights[j].lightDiff);
+                vec4.scale(diffuse, diffuse, att * Math.max(0, vec4.dot(rayHit.surfNorm, shadowFeeler.dir)));
+
+                var lightReflection = vec4.create();
+
+                //Compute R.V
+                var specular = vec4.create();
+                this.reflect(lightReflection, rayHit.surfNorm, shadowFeeler.dir);
+                var RdotV = 0;
+                vec4.dot(RdotV, lightReflection, viewVector);
+                vec4.multiply(specular, rayHit.surfaceProperties.spec_I, lights[j].lightSpec);
+                vec4.scale(specular, specular, att * Math.pow(RdotV, rayHit.surfaceProperties.shine));
+
+                out[0] = (out[0] + (diffuse[0] + specular[0]) * color_percent[0]) * lights[j].lightIntensity;
+                out[1] = (out[1] + (diffuse[1] + specular[1]) * color_percent[1]) * lights[j].lightIntensity;
+                out[2] = (out[2] + (diffuse[2] + specular[2]) * color_percent[2]) * lights[j].lightIntensity;
+            }
+            else {
+                
+            }
         }
 
-        if (/*isReflection && */!shadowHit.shadow) {
-            //Calculating Attenuation;
-            var dist = this.distanceToLight(rayHit.hitPt, light);
-
-            var att = 1 / dist;
-
-            var diffuse = vec4.create();
-            vec4.multiply(diffuse, rayHit.surfaceProperties.diff_I, light.lightDiff);
-            vec4.scale(diffuse, diffuse, att * Math.max(0, vec4.dot(rayHit.surfNorm, shadowFeeler.dir)));
-
-            var lightReflection = vec4.create();
-
-            //Compute R.V
-            var specular = vec4.create();
-            this.reflect(lightReflection, rayHit.surfNorm, shadowFeeler.dir);
-            var RdotV = 0;
-            vec4.dot(RdotV, lightReflection, viewVector);
-            vec4.multiply(specular, rayHit.surfaceProperties.spec_I, light.lightSpec);
-            vec4.scale(specular, specular, att * Math.pow(RdotV, rayHit.surfaceProperties.shine));
-
-            this.reflect(reflectedRay.dir, rayHit.surfNorm, viewVector);
-
-            out[0] = (out[0] + (diffuse[0] + specular[0]) * color_percent[0]) * light.lightIntensity;
-            out[1] = (out[1] + (diffuse[1] + specular[1]) * color_percent[1]) * light.lightIntensity;
-            out[2] = (out[2] + (diffuse[2] + specular[2]) * color_percent[2]) * light.lightIntensity;
-        } else {
-            this.reflect(reflectedRay.dir, rayHit.surfNorm, viewVector);
-        }
+        this.reflect(reflectedRay.dir, rayHit.surfNorm, viewVector);
 
         recursion--;
-
 
         for (var i = 0; i < objects.length; i++) {
             objects[i].traceShape(reflectedRay, reflectedHit, false);
         }
 
-        this.phong(out, originalHit, reflectedHit, objects, recursion, light, true);
+        this.phong(out, originalHit, reflectedHit, objects, recursion, lights, true);
     }
 
     //Helper Functions
@@ -509,4 +543,55 @@ class Scene {
 
         return distance;
     }
+
+    rayMarching(ray) {
+        var distance = 0;
+        var hitObject = new Hit();
+        for (var i = 0; i < g_MAX_RAYMARCH_STEPS; i++) {
+            var p = vec4.create();
+            vec4.add(p, p, ray.origin);
+            vec4.scaleAndAdd(p, p, ray.dir, distance);
+            var hitObject = this.GetClosestHitObject(p);
+            if (closestDist <= this.RAY_EPSILON || closestDist > g_MAX_RAYMARCH_DISTANCE)
+                break;
+        }
+
+        return hitObject;
+    }
+
+    GetClosestHitObject(myRay) {
+        var distances = [];
+        var plane = [];
+        var scene_spheres = [];
+
+        for (var i = 0; i < this.item.length; i++) {
+            if (this.item[i].shapeType == RT_SPHERE) {
+                scene_spheres.push(this.item[i]);
+            }
+            if (this.item[i].shapeType == RT_GNDPLANE) {
+                plane.push(this.item[i]);
+            }
+        }
+
+        for (var i = 0; i < plane.length; i++) {
+            var d = myRay.origin[2];
+            distances.push(d);
+        }
+
+        for (var i = 0; i < scene_spheres.length; i++) {
+            var d = Math.sqrt(Math.pow(scene_spheres[i].center[0] - myRay.origin[0], 2) +
+                Math.pow(scene_spheres[i].center[1] - myRay.origin[1], 2) +
+                Math.pow(scene_spheres[i].center[2] - myRay.origin[2], 2));
+
+            d -= scene_spheres[i].radius;
+            distances.push(d);
+        }
+
+        var min = Math.min(...distances);
+        return min;
+    }
 }
+
+
+
+

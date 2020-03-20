@@ -20,9 +20,7 @@ class GUI {
             this.recursions = 1;
 
             this.setValues = function () {
-                console.log(g_AAcode);
-                g_AAcode = this.anti_aliasing;
-                console.log(g_AAcode);
+                g_AAcode = parseInt(this.anti_aliasing);
                 g_recusrionsNum = this.recursions;
                 if (this.isJittered)
                     g_isJitter = 1;
@@ -39,13 +37,13 @@ class GUI {
             }
         }
 
-        this.LightGUI = function () {
+        this.WorldLightGUI = function () {
             this.lightIntensity = 1;
             this.light_diffuse = [255, 255, 255];
             this.light_ambient = [255, 255, 255];
             this.light_specular = [255, 255, 255];
             this.x_Position = 0;
-            this.y_Position = 0;
+            this.y_Position = 5;
             this.z_Position = 20;
 
             this.reloadLight = function () {
@@ -79,11 +77,49 @@ class GUI {
             }
         }
 
+        this.HeadLightGUI = function () {
+            this.enable = false;
+            this.lightIntensity = 1;
+            this.light_diffuse = [255, 255, 255];
+            this.light_ambient = [255, 255, 255];
+            this.light_specular = [255, 255, 255];
+            this.x_Position = 0;
+            this.y_Position = -5;
+            this.z_Position = 20;
 
-        this.ResGUI = function () {
+            this.reloadLight = function () {
 
+                g_headLightOn = this.enable;
+
+                g_headLight_intensity = this.lightIntensity;
+                //Diffuse
+                this.light_diffuse[0] /= 255;
+                this.light_diffuse[1] /= 255;
+                this.light_diffuse[2] /= 255;
+
+                //Ambient
+                this.light_ambient[0] /= 255;
+                this.light_ambient[1] /= 255;
+                this.light_ambient[2] /= 255;
+
+                //Specular
+                this.light_specular[0] /= 255;
+                this.light_specular[1] /= 255;  
+                this.light_specular[2] /= 255;
+
+
+                //Update Values
+                g_myScene.headLight.ChangeIntensity(g_headLight_intensity);
+                g_myScene.headLight.ChangeDiffuse(this.light_diffuse);
+                g_myScene.headLight.ChangeSpecular(this.light_specular);
+                g_myScene.headLight.ChangeAmbient(this.light_ambient);
+                g_myScene.headLight.UpdatePosition(this.x_Position, this.y_Position, this.z_Position);
+
+                this.light_diffuse = [255, 255, 255];
+                this.light_ambient = [255, 255, 255];
+                this.light_specular = [255, 255, 255];
+            }
         }
-
     }
 
     init() {
@@ -117,10 +153,6 @@ class GUI {
         //  		modifiers such as shift, alt, or ctrl.  I use these for single-
         //      number and single-letter inputs events include SHIFT,CTRL,ALT.
         // END Mouse & Keyboard Event-Handlers----------------------------------------
-        // REPORT initial mouse-drag totals on-screen:
-        document.getElementById('MouseDragResult').innerHTML =
-            'Mouse Drag totals (CVV coords):\t' +
-            this.xMdragTot.toFixed(5) + ', \t' + this.yMdragTot.toFixed(5);
 
         window.onload = this.showDatGUI();
 
@@ -248,10 +280,6 @@ class GUI {
             //------------------Ray Tracing----------------------
             case 't':
             case 'T':
-                //console.log("TRACE a new image!\n");
-                document.getElementById('KeyPressResult').innerHTML =
-                    'GUIbox.keyPress() found t/T key. TRACE!';
-                //console.log('Recursions : ', g_recusrionsNum, 'Anti-aliased:', g_AAcode);
                 g_myScene.makeRayTracedImage(); // run the ray-tracer		
                 raytracedView.switchToMe(); // be sure OUR VBO & shaders are in use, then
                 raytracedView.reload();     // re-transfer VBO contents and texture-map contents
@@ -261,8 +289,6 @@ class GUI {
             case 'c':
             case 'C':
                 //			console.log("CLEAR the ray-traced image buffer.\n");
-                document.getElementById('KeyPressResult').innerHTML =
-                    'GUIbox.keyPress() found c/C key. CLEAR!';
                 g_myPic.setTestPattern(1);      // solid orange.
                 g_sceneNum = 1;       // (re-set onScene() button-handler, too)
                 raytracedView.switchToMe(); // be sure OUR VBO & shaders are in use, then
@@ -273,29 +299,21 @@ class GUI {
             case 'a':
             case 'A':
                 //			console.log("a/A key: Strafe LEFT!\n");
-                document.getElementById('KeyPressResult').innerHTML =
-                    'GUIbox.keyPress() found a/A key. Strafe LEFT!';
                 this.camStrafe_L();
                 break;
             case 'd':
             case 'D':
                 //			console.log("d/D key: Strafe RIGHT!\n");
-                document.getElementById('KeyPressResult').innerHTML =
-                    'GUIbox.keyPress() found d/D key. Strafe RIGHT!';
                 this.camStrafe_R();
                 break;
             case 's':
             case 'S':
                 //			console.log("s/S key: Move REV!\n");
-                document.getElementById('KeyPressResult').innerHTML =
-                    'GUIbox.keyPress() found s/S key. Move REV!';
                 this.camRev();
                 break;
             case 'w':
             case 'W':
                 //			console.log("w/W key: Move FWD!\n");
-                document.getElementById('KeyPressResult').innerHTML =
-                    'GUIbox.keyPress() found w/W key. Move FWD!';
                 this.camFwd();
                 break;
             case 'L':
@@ -306,11 +324,6 @@ class GUI {
                 console.log('GUIbox.keyPress(): Ignored key: ' + myChar);
                 // Report EVERYTHING about this pressed key in the webpage 
                 // in the <div> element with id='Result':r 
-                document.getElementById('KeyPressResult').innerHTML =
-                    'GUIbox.keyPress(): UNUSED char= ' + myChar + ', keyCode= ' + kev.keyCode +
-                    ', charCode= ' + kev.charCode + ', shift= ' + kev.shiftKey +
-                    ', ctrl= ' + kev.shiftKey + ', altKey= ' + kev.altKey +
-                    ', metaKey= ' + kev.metaKey;
                 break;
         }
     }
@@ -364,29 +377,51 @@ class GUI {
 
         var gui = new dat.GUI();
         var RTFolder = new this.RayTracerGUI();
-        var LightFolder = new this.LightGUI();
+        var WorldLightFolder = new this.WorldLightGUI();
+        var HeadLightFolder = new this.HeadLightGUI();
 
         var RT = gui.addFolder('Ray Tracer Settings');
         RT.add(RTFolder, 'anti_aliasing', { One_X_One: 1, Two_X_Two: 2, Three_X_Three: 3, Four_X_Four: 4 });
         RT.add(RTFolder, 'isJittered');
-        RT.add(RTFolder, 'recursions', { One: 1, Two: 2, Three: 3, Four: 4 });
+        RT.add(RTFolder, 'recursions', { None: 1, One: 2, Two: 3, Three: 4, Four: 5 });
         RT.add(RTFolder, 'setValues');
 
-        var Lights = gui.addFolder('World Light Settings');
-        var lightPos = Lights.addFolder('Light Position');
-        lightPos.add(LightFolder, 'x_Position').min(-100).max(100).step(0.25);
-        lightPos.add(LightFolder, 'y_Position').min(-100).max(100).step(0.25);
-        lightPos.add(LightFolder, 'z_Position').min(1).max(100).step(0.25);
+        var WorldLight = gui.addFolder('World Light Settings');
+        var worldLightPos = WorldLight.addFolder('Light Position');
+        worldLightPos.add(WorldLightFolder, 'x_Position').min(-100).max(100).step(0.25);
+        worldLightPos.add(WorldLightFolder, 'y_Position').min(-100).max(100).step(0.25);
+        worldLightPos.add(WorldLightFolder, 'z_Position').min(1).max(100).step(0.25);
 
-        var lightColor = Lights.addFolder('Light Color');
-        lightColor.addColor(LightFolder, 'light_diffuse');
-        lightColor.addColor(LightFolder, 'light_ambient');
-        lightColor.addColor(LightFolder, 'light_specular');
+        var worldLightColor = WorldLight.addFolder('Light Color');
+        worldLightColor.addColor(WorldLightFolder, 'light_diffuse');
+        worldLightColor.addColor(WorldLightFolder, 'light_ambient');
+        worldLightColor.addColor(WorldLightFolder, 'light_specular');
+        worldLightColor.add(WorldLightFolder, 'lightIntensity', 0, 5);
 
-        lightColor.open();
-        lightPos.open();
+        worldLightColor.open();
+        worldLightPos.open();
 
-        Lights.add(LightFolder, 'lightIntensity', 0, 5);
-        Lights.add(LightFolder, 'reloadLight');
+        WorldLight.add(WorldLightFolder, 'reloadLight');
+
+        var HeadLight = gui.addFolder('Head Light Settings');
+        HeadLight.add(HeadLightFolder, 'enable');
+
+        var headLightPos = HeadLight.addFolder('Light Position');
+        headLightPos.add(HeadLightFolder, 'x_Position').min(-100).max(100).step(0.25);
+        headLightPos.add(HeadLightFolder, 'y_Position').min(-100).max(100).step(0.25);
+        headLightPos.add(HeadLightFolder, 'z_Position').min(1).max(100).step(0.25);
+
+        var headLightColor = HeadLight.addFolder('Light Color');
+        headLightColor.addColor(HeadLightFolder, 'light_diffuse');
+        headLightColor.addColor(HeadLightFolder, 'light_ambient');
+        headLightColor.addColor(HeadLightFolder, 'light_specular');
+        headLightColor.add(HeadLightFolder, 'lightIntensity', 0, 5);
+
+        headLightColor.open();
+        headLightPos.open();
+
+        HeadLight.add(HeadLightFolder, 'reloadLight');
+
+
     }
 }

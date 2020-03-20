@@ -6,7 +6,7 @@ class Light {
         if (x != null && y != null && z != null) {
             this.position = vec4.fromValues(x, y, z, 1);
         } else {
-            this.position = vec4.fromValues(0, 0, 20, 1);
+            this.position = vec4.fromValues(0, 5, 20, 1);
         }
 
         this.lightAmbi = vec4.fromValues(0.5, 0.5, 0.5, 1);

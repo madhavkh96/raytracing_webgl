@@ -616,6 +616,20 @@ class WebGLView {
                 mat4.copy(this.mvpMat, temp);
 
                 gl.drawArrays(gl.LINES, this.bgnDisk, this.bgnSphere - this.bgnDisk);
+
+
+                //Sphere
+                var temp = mat4.create();
+                mat4.copy(temp, this.mvpMat);
+
+                mat4.translate(this.mvpMat, this.mvpMat, vec3.fromValues(0.0, -0.5, 3.5));
+                mat4.scale(this.mvpMat, this.mvpMat, vec3.fromValues(0.4, 0.4, 0.4));
+
+                gl.uniformMatrix4fv(this.u_mvpMatLoc, false, this.mvpMat);
+                mat4.copy(this.mvpMat, temp);
+
+                gl.drawArrays(gl.LINES, this.bgnSphere, this.vboVerts - this.bgnSphere);
+
                 break;
         }
 
