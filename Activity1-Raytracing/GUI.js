@@ -403,7 +403,7 @@ class GUI {
 
         WorldLight.add(WorldLightFolder, 'reloadLight');
 
-        var HeadLight = gui.addFolder('Head Light Settings');
+        var HeadLight = gui.addFolder('Portable Light Settings');
         HeadLight.add(HeadLightFolder, 'enable');
 
         var headLightPos = HeadLight.addFolder('Light Position');

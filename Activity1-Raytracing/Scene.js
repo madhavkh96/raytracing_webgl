@@ -272,6 +272,93 @@ class Scene {
                 this.item[iNow].setShine(60.0);
 
                 break;
+
+            case 3:
+
+                this.item.push(new Geometery(RT_GNDPLANE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+
+                //Add the material
+                this.item[iNow].setEmissive(0, 0, 0);
+                this.item[iNow].setAmbient(0.25, 0.20, 0.20);
+                this.item[iNow].setDiffuse(1.0, 0.829, 0.829);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(70.0);
+
+                this.item.push(new Geometery(RT_DISK));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(-3.0, 0.0, 2.0);
+                this.item[iNow].rayRotate(0.5 * Math.PI, 0, 1, 0);
+
+                this.item[iNow].setEmissive(0, 0, 0);
+                this.item[iNow].setAmbient(0.1, 0.18725, 0.1745);
+                this.item[iNow].setDiffuse(0.396, 0.74151, 0.69102);
+                this.item[iNow].setSpecular(0.8, 0.8, 0.8);
+                this.item[iNow].setShine(80.0);
+
+                this.item.push(new Geometery(RT_DISK));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(3.0, 0.0, 2.0);
+                this.item[iNow].rayRotate(0.5 * Math.PI, 0, 1, 0);
+
+                this.item[iNow].setEmissive(0, 0, 0);
+                this.item[iNow].setAmbient(0.1, 0.18725, 0.1745);
+                this.item[iNow].setDiffuse(0.396, 0.74151, 0.69102);
+                this.item[iNow].setSpecular(0.8, 0.8, 0.8);
+                this.item[iNow].setShine(80.0);
+
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(0, -1.0, 2.0);
+                this.item[iNow].rayScale(0.4, 0.4, 0.4);
+
+                //Add the Material
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.3, 0.05, 0.05);
+                this.item[iNow].setDiffuse(0.9, 0.0, 0.0);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(60.0);
+
+
+                //Sphere 2
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(-1.0, 1.0, 2.0);
+                this.item[iNow].rayScale(0.7, 0.7, 0.7);
+
+                //Add the Material
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.05, 0.6, 0.3);
+                this.item[iNow].setDiffuse(0.1, 0.8, 0.9);
+                this.item[iNow].setSpecular(0.2, 0.2, 0.2);
+                this.item[iNow].setShine(60.0);
+
+
+                //Sphere 3
+                this.item.push(new Geometery(RT_SPHERE));
+                iNow = this.item.length - 1;
+
+                this.item[iNow].setIdentity();
+                this.item[iNow].rayTranslate(1.0, 1.0, 2.0);
+                this.item[iNow].rayScale(0.3, 0.3, 0.3);
+
+                //Add the Material
+                this.item[iNow].setEmissive(0.0, 0.0, 0.0);
+                this.item[iNow].setAmbient(0.23125, 0.23125, 0.23125);
+                this.item[iNow].setDiffuse(0.8775, 0.8775, 0.8775);
+                this.item[iNow].setSpecular(0.773911, 0.773911, 0.773911);
+                this.item[iNow].setShine(60.0);
+                break;
             default:
                 this.init(0);
                 break;
@@ -307,8 +394,6 @@ class Scene {
 
         var x_factor = 0;
         var y_factor = 0;
-
-        console.log('g_AACode', g_AAcode);
 
         for (j = 0; j < this.imgBuf.ySize; j++) {
             for (i = 0; i < this.imgBuf.xSize; i++) {
