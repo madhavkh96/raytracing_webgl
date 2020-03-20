@@ -14,7 +14,7 @@ var g_myScene = new Scene();
 
 var g_SceneNum = 0;
 
-var G_SCENE_MAX = 3;
+var G_SCENE_MAX = 4;
 
 var g_AAcode = 1;  // -1, -2, -3, -4 == No Jitter Super Sampled
 
@@ -27,6 +27,16 @@ var G_AA_MAX = 4;
 //Light Controls
 
 var g_Light_intensity = 1;
+
+var g_headLight_intensity = 1;
+
+var g_headLightOn = false;
+
+//Ray Marching Controls
+
+var g_MAX_RAYMARCH_STEPS = 100;
+
+
 
 
 function main() {
@@ -77,67 +87,67 @@ function drawAll() {
 }
 
 
-function onSuperSampleButton() {
-    //=============================================================================
-    //console.log('ON-SuperSample BUTTON!');
-    g_AAcode += 1;
-    if (g_AAcode > G_AA_MAX) g_AAcode = 1; 
-    if (g_AAcode == 1) {
-        if (g_isJitter == 0) {
-            document.getElementById('AAreport').innerHTML =
-                "1 sample/pixel. No jitter.";
-            console.log("1 sample/pixel. No Jitter.");
-        }
-        else {
-            document.getElementById('AAreport').innerHTML =
-                "1 sample/pixel, but jittered.";
-            console.log("1 sample/pixel, but jittered.")
-        }
-    }
-    else { // g_AAcode !=1
-        if (g_isJitter == 0) {
-            document.getElementById('AAreport').innerHTML =
-                g_AAcode + "x" + g_AAcode + " Supersampling. No jitter.";
-            console.log(g_AAcode, "x", g_AAcode, "Supersampling. No Jitter.");
-        }
-        else {
-            document.getElementById('AAreport').innerHTML =
-                g_AAcode + "x" + g_AAcode + " JITTERED Supersampling";
-            console.log(g_AAcode, "x", g_AAcode, " JITTERED Supersampling.");
-        }
-    }
-}
-function onJitterButton() {
-    //=============================================================================
-    console.log('ON-JITTER button!!');
-    if (g_isJitter == 0) g_isJitter = 1;
-    else g_isJitter = 0;
+//function onSuperSampleButton() {
+//    //=============================================================================
+//    //console.log('ON-SuperSample BUTTON!');
+//    g_AAcode += 1;
+//    if (g_AAcode > G_AA_MAX) g_AAcode = 1; 
+//    if (g_AAcode == 1) {
+//        if (g_isJitter == 0) {
+//            document.getElementById('AAreport').innerHTML =
+//                "1 sample/pixel. No jitter.";
+//            console.log("1 sample/pixel. No Jitter.");
+//        }
+//        else {
+//            document.getElementById('AAreport').innerHTML =
+//                "1 sample/pixel, but jittered.";
+//            console.log("1 sample/pixel, but jittered.")
+//        }
+//    }
+//    else { // g_AAcode !=1
+//        if (g_isJitter == 0) {
+//            document.getElementById('AAreport').innerHTML =
+//                g_AAcode + "x" + g_AAcode + " Supersampling. No jitter.";
+//            console.log(g_AAcode, "x", g_AAcode, "Supersampling. No Jitter.");
+//        }
+//        else {
+//            document.getElementById('AAreport').innerHTML =
+//                g_AAcode + "x" + g_AAcode + " JITTERED Supersampling";
+//            console.log(g_AAcode, "x", g_AAcode, " JITTERED Supersampling.");
+//        }
+//    }
+//}
+//function onJitterButton() {
+//    //=============================================================================
+//    console.log('ON-JITTER button!!');
+//    if (g_isJitter == 0) g_isJitter = 1;
+//    else g_isJitter = 0;
 
-    if (g_AAcode == 1) {
-        if (g_isJitter == 0) {
-            document.getElementById('AAreport').innerHTML =
-                "1 sample/pixel. No jitter.";
-            console.log("1 sample/pixel. No Jitter.");
-        }
-        else {
-            document.getElementById('AAreport').innerHTML =
-                "1 sample/pixel, but jittered.";
-            console.log("1 sample/pixel, but jittered.")
-        }
-    }
-    else { // g_AAcode !=0
-        if (g_isJitter == 0) {
-            document.getElementById('AAreport').innerHTML =
-                g_AAcode + "x" + g_AAcode + " Supersampling. No jitter.";
-            console.log(g_AAcode, "x", g_AAcode, "Supersampling. No Jitter.");
-        }
-        else {
-            document.getElementById('AAreport').innerHTML =
-                g_AAcode + "x" + g_AAcode + " JITTERED Supersampling";
-            console.log(g_AAcode, "x", g_AAcode, " JITTERED Supersampling.");
-        }
-    }
-}
+//    if (g_AAcode == 1) {
+//        if (g_isJitter == 0) {
+//            document.getElementById('AAreport').innerHTML =
+//                "1 sample/pixel. No jitter.";
+//            console.log("1 sample/pixel. No Jitter.");
+//        }
+//        else {
+//            document.getElementById('AAreport').innerHTML =
+//                "1 sample/pixel, but jittered.";
+//            console.log("1 sample/pixel, but jittered.")
+//        }
+//    }
+//    else { // g_AAcode !=0
+//        if (g_isJitter == 0) {
+//            document.getElementById('AAreport').innerHTML =
+//                g_AAcode + "x" + g_AAcode + " Supersampling. No jitter.";
+//            console.log(g_AAcode, "x", g_AAcode, "Supersampling. No Jitter.");
+//        }
+//        else {
+//            document.getElementById('AAreport').innerHTML =
+//                g_AAcode + "x" + g_AAcode + " JITTERED Supersampling";
+//            console.log(g_AAcode, "x", g_AAcode, " JITTERED Supersampling.");
+//        }
+//    }
+//}
 
 function onSceneButton() {
     //=============================================================================

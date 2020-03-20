@@ -30,25 +30,14 @@ class Geometery {
         this.lineColor = vec4.fromValues(0.1, 0.1, 0.1, 1.0);  // RGBA green(A==opacity)
         this.gapColor = vec4.fromValues(0.9, 0.9, 0.9, 1.0);  // near-white
         this.skyColor = vec4.fromValues(0.3, 1.0, 1.0, 1.0);  // cyan/bright blue
+
+        this.center = vec4.fromValues(0, 0, 0, 1);
+        this.radius = 1;
     }
 
     setIdentity() {
         mat4.identity(this.worldRay2model);
         mat4.identity(this.normal2World);
-    }
-
-    rayTranslate(x, y, z) {
-        var a = mat4.create();
-        a[12] = -x;
-        a[13] = -y;
-        a[14] = -z;
-
-        mat4.multiply(this.worldRay2model, a, this.worldRay2model);
-
-        this.worldRay2model[3] = 0.0;
-        this.worldRay2model[7] = 0.0;
-        this.worldRay2model[11] = 0.0;
-        this.worldRay2model[15] = 1.0;
     }
 
     setDiffuse(r, g, b) {
@@ -69,6 +58,22 @@ class Geometery {
 
     setShine(shine) {
         this.surfaceProperties.shine = shine;
+    }
+
+    rayTranslate(x, y, z) {
+        var a = mat4.create();
+        a[12] = -x;
+        a[13] = -y;
+        a[14] = -z;
+
+        mat4.multiply(this.worldRay2model, a, this.worldRay2model);
+
+        this.worldRay2model[3] = 0.0;
+        this.worldRay2model[7] = 0.0;
+        this.worldRay2model[11] = 0.0;
+        this.worldRay2model[15] = 1.0;
+
+        this.center = vec4.fromValues(x, y, z, 1);
     }
 
     rayRotate(rad, ax, ay, az) {
@@ -119,6 +124,7 @@ class Geometery {
 
         mat4.multiply(this.worldRay2model, c, this.worldRay2model);
         mat4.transpose(this.normal2World, this.worldRay2model);
+        this.radius = (sx + sy + sz) / 3;
     }
 
     traceShape(inRay, hit, shadow) {
@@ -253,9 +259,11 @@ class Geometery {
 
                 vec4.normalize(hit.viewN, hit.viewN);
 
-                vec4.transformMat4(hit.surfNorm, hit.modelHitPt, this.normal2World);
+
+                vec4.transformMat4(hit.surfNorm, vec4.fromValues(0, 0, 1, 0), this.normal2World);
 
                 hit.surfNorm[3] = 0.0;
+
                 //hit.surfNorm[0] = hit.surfNorm[1];
                 //hit.surfNorm[1] = hit.surfNorm[2];
                 //hit.surfNorm[2] = hit.surfNorm[3];
@@ -354,4 +362,5 @@ class Geometery {
 
         }
     }
+
 }
