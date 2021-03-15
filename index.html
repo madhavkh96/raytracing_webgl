@@ -2,47 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>RayTracer</title>  <!-- Keep it short: title appears on browser tab-->
-    <!-- OPTIONAL: let's surround canvas with a thin blue outline -->
-    <style type=" text/ css">
-        canvas {
-            border: 2px dotted blue;
-        }
+    <title>RayTracer</title>
+    <style>
+    canvas {
+        border: 2px solid blue;
+    }
 
-        .row:after {
-            content: "";
-            display: table;
-            clear: both;
-        }
+    .row:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
 
-        .mainColumn {
-            float: left;
-            width: 100.00%;
-            font-family: Arial, Arial, Helvetica, sans-serif;
-            align-content: center;
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
+    .mainColumn {
+        float: left;
+        width: 100.00%;
+        font-family: Arial, Arial, Helvetica, sans-serif;
+        align-content: center;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
 
-        .Title {
-            color: chocolate;
-            font-size: 20px;
-            text-align: center;
-        }
+    .Title {
+        color: chocolate;
+        font-size: 30px;
+        text-align: center;
+    }
 
-        .textColumn {
-            padding-left: 40px;
-            width: 100.00%;
-            font-family: Arial, Arial, Helvetica, sans-serif;
-            font-size: 14px;
-            text-align: center;
-        }
+    .title{
+        color: royalblue;
+        font-size: 15px;
+        text-align: center;
+    }
 
-    </style>
+    .textColumn {
+        padding-left: 40px;
+        width: 100.00%;
+        font-family: Arial, Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        text-align: center;
+    }
+
+</style>
 </head>
 
-<!--	Create the HTML5 'canvas' element in which we will run WebGL
--->
+
+
 <body onload="main()" onresize="onBrowserResize()">
     <div class="row">
         <div class="mainColumn">
@@ -72,10 +77,7 @@
             <br>
         </div>
     </div>
-    <!--	Load in the JavaScript libraries supplied by our textbook
-            (Matsuda et al., 2013 WebGL Programming Guide) that help us
-            with WebGL programming:
-    -->
+    <!--	Load in the JavaScript libraries -->
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>
     <script src="lib/cuon-utils.js"></script>
@@ -83,13 +85,13 @@
     <script src="lib/glmatrix.js"></script>
 
     <!-- finally, our own code: -->
-    <script src="Activity1-Raytracing/GUI.js"></script>
-    <script src="Activity1-Raytracing/Camera.js"></script>
-    <script src="Activity1-Raytracing/Geometery.js"></script>
-    <script src="Activity1-Raytracing/ImageBuffer.js"></script>
-    <script src="Activity1-Raytracing/Scene.js"></script>
-    <script src="Activity1-Raytracing/Light.js"></script>
-    <script src="Activity1-Raytracing/VBObox.js"></script>
-    <script src="Activity1-Raytracing/RayTracer.js"></script>
+    <script src="RayTracer/GUI.js"></script>
+    <script src="RayTracer/Camera.js"></script>
+    <script src="RayTracer/Geometery.js"></script>
+    <script src="RayTracer/ImageBuffer.js"></script>
+    <script src="RayTracer/Scene.js"></script>
+    <script src="RayTracer/Light.js"></script>
+    <script src="RayTracer/VBObox.js"></script>
+    <script src="RayTracer/RayTracer.js"></script>
 </body>
 </html>
